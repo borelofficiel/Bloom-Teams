@@ -1,0 +1,1797 @@
+/* =========================================================
+   ADMIN BLOOM TEAMS
+   DASHBOARD
+   SIDEBAR À GAUCHE
+========================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f5f6f8;
+  color: #171717;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+
+/* =========================================================
+   PAGE ADMIN
+========================================================= */
+
+.admin-page {
+  min-height: 100vh;
+  background: #f5f6f8;
+  display: flex;
+}
+
+
+/* =========================================================
+   SIDEBAR GAUCHE
+========================================================= */
+
+.admin-sidebar {
+  width: 250px;
+  min-height: 100vh;
+
+  background: #111111;
+  color: white;
+
+  padding: 30px 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  z-index: 100;
+}
+
+
+/* =========================================================
+   LOGO
+========================================================= */
+
+.admin-logo {
+  font-size: 25px;
+  font-weight: 900;
+
+  letter-spacing: -1px;
+
+  padding: 5px 12px 40px;
+}
+
+.admin-logo span {
+  display: block;
+
+  font-size: 10px;
+  letter-spacing: 2px;
+
+  color: #777;
+
+  margin-top: 5px;
+}
+
+
+/* =========================================================
+   MENU
+========================================================= */
+
+.admin-menu {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.admin-menu a {
+  text-decoration: none;
+
+  color: #999;
+
+  padding: 13px 14px;
+
+  border-radius: 7px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  transition: 0.2s ease;
+}
+
+.admin-menu a span {
+  width: 22px;
+
+  text-align: center;
+
+  font-size: 17px;
+}
+
+.admin-menu a:hover {
+  background: #1e1e1e;
+  color: white;
+}
+
+.admin-menu a.menu-actif {
+  background: #292929;
+  color: white;
+}
+
+
+/* =========================================================
+   BAS SIDEBAR
+========================================================= */
+
+.admin-sidebar-bas {
+  margin-top: auto;
+
+  border-top: 1px solid #292929;
+
+  padding-top: 20px;
+}
+
+.admin-indicateur {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 18px;
+
+  color: #888;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+}
+
+.admin-indicateur span {
+  width: 7px;
+  height: 7px;
+
+  background: #38b66b;
+
+  border-radius: 50%;
+
+  box-shadow: 0 0 8px rgba(56, 182, 107, 0.5);
+}
+
+.retour-site {
+  color: #aaa;
+
+  text-decoration: none;
+
+  font-size: 11px;
+
+  transition: 0.2s ease;
+}
+
+.retour-site:hover {
+  color: white;
+}
+
+
+/* =========================================================
+   CONTENU PRINCIPAL
+========================================================= */
+
+.admin-contenu {
+  margin-left: 250px;
+
+  width: calc(100% - 250px);
+
+  padding: 35px 45px 50px;
+
+  max-width: 1700px;
+}
+
+
+/* =========================================================
+   HEADER ADMIN
+========================================================= */
+
+.admin-header {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  margin-bottom: 35px;
+
+  padding-bottom: 25px;
+
+  border-bottom: 1px solid #e3e3e3;
+}
+
+.admin-header .admin-sur-titre {
+  margin-bottom: 8px;
+}
+
+.admin-header h1 {
+  margin: 0;
+
+  font-size: 29px;
+
+  letter-spacing: -1px;
+}
+
+.admin-header .admin-description {
+  margin-top: 8px;
+}
+
+
+/* =========================================================
+   ACTIONS HEADER
+========================================================= */
+
+.admin-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 20px;
+}
+
+
+/* =========================================================
+   BOUTON ACTUALISER
+========================================================= */
+
+.bouton-actualiser {
+  height: 40px;
+
+  padding: 0 16px;
+
+  border: 1px solid #ddd;
+
+  background: white;
+
+  color: #333;
+
+  border-radius: 6px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.bouton-actualiser:hover {
+  background: #111;
+  color: white;
+
+  border-color: #111;
+}
+
+.bouton-actualiser:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   PROFIL ADMIN
+========================================================= */
+
+.profil-admin {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.avatar-admin {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 50%;
+
+  background: #111;
+
+  color: white;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.profil-admin strong {
+  display: block;
+
+  font-size: 10px;
+
+  color: #222;
+}
+
+.profil-admin small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #999;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   PETITS TITRES
+========================================================= */
+
+.admin-sur-titre {
+  margin: 0;
+
+  color: #888;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+
+/* =========================================================
+   DESCRIPTION
+========================================================= */
+
+.admin-description {
+  margin: 8px 0 0;
+
+  color: #777;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+
+  max-width: 650px;
+}
+
+
+/* =========================================================
+   INTRODUCTION
+========================================================= */
+
+.admin-introduction {
+  display: flex;
+
+  align-items: flex-end;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 25px;
+}
+
+.admin-introduction h2 {
+  margin: 0;
+
+  font-size: 21px;
+
+  letter-spacing: -0.5px;
+}
+
+.admin-introduction p:not(.admin-sur-titre) {
+  color: #777;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+
+  max-width: 650px;
+}
+
+
+/* =========================================================
+   DATE / TOTAL PRÉSENCES
+========================================================= */
+
+.date-tableau {
+  min-width: 190px;
+
+  background: white;
+
+  border: 1px solid #e3e3e3;
+
+  border-radius: 9px;
+
+  padding: 16px 25px;
+
+  text-align: center;
+}
+
+.date-tableau span {
+  display: block;
+
+  color: #999;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+.date-tableau strong {
+  display: block;
+
+  margin-top: 5px;
+
+  font-size: 31px;
+
+  color: #111;
+}
+
+
+/* =========================================================
+   ERREUR FIREBASE
+========================================================= */
+
+.admin-erreur {
+  background: #fff1f1;
+
+  border: 1px solid #e5caca;
+
+  color: #9c3535;
+
+  padding: 14px 18px;
+
+  border-radius: 7px;
+
+  margin-bottom: 20px;
+
+  font-size: 11px;
+
+  font-weight: 600;
+}
+
+
+/* =========================================================
+   CARTES STATISTIQUES
+========================================================= */
+
+.cartes-statistiques {
+  display: grid;
+
+  grid-template-columns: repeat(4, 1fr);
+
+  gap: 15px;
+
+  margin-bottom: 25px;
+}
+
+.carte-statistique {
+  background: white;
+
+  border: 1px solid #e4e4e4;
+
+  border-radius: 9px;
+
+  padding: 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 15px;
+
+  transition: 0.2s ease;
+}
+
+.carte-statistique:hover {
+  transform: translateY(-2px);
+
+  border-color: #ccc;
+}
+
+.icone-statistique {
+  width: 35px;
+  height: 35px;
+
+  flex-shrink: 0;
+
+  border: 1px solid #ddd;
+
+  border-radius: 7px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 9px;
+
+  font-weight: 800;
+
+  color: #555;
+}
+
+.carte-statistique p {
+  margin: 0;
+
+  color: #999;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+}
+
+.carte-statistique strong {
+  display: block;
+
+  margin-top: 7px;
+
+  font-size: 27px;
+
+  color: #111;
+}
+
+
+/* =========================================================
+   OUTILS DE RECHERCHE
+========================================================= */
+
+.outils-admin {
+  background: white;
+
+  border: 1px solid #e4e4e4;
+
+  border-radius: 9px;
+
+  padding: 20px;
+
+  margin-bottom: 20px;
+
+  display: flex;
+
+  gap: 15px;
+
+  align-items: flex-end;
+}
+
+.recherche-admin {
+  flex: 1;
+}
+
+.recherche-admin label,
+.filtre-admin label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #888;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+.recherche-admin input {
+  width: 100%;
+
+  height: 40px;
+
+  padding: 0 13px;
+
+  border: 1px solid #ddd;
+
+  border-radius: 6px;
+
+  outline: none;
+
+  font-size: 11px;
+
+  color: #222;
+
+  background: white;
+
+  transition: 0.2s ease;
+}
+
+.recherche-admin input:focus {
+  border-color: #222;
+}
+
+.recherche-admin input::placeholder {
+  color: #aaa;
+}
+
+.filtre-admin {
+  width: 180px;
+}
+
+.filtre-admin select {
+  width: 100%;
+
+  height: 40px;
+
+  padding: 0 12px;
+
+  border: 1px solid #ddd;
+
+  border-radius: 6px;
+
+  outline: none;
+
+  background: white;
+
+  color: #444;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   SECTION TABLEAU
+========================================================= */
+
+.section-tableau {
+  background: white;
+
+  border: 1px solid #e4e4e4;
+
+  border-radius: 9px;
+
+  overflow: hidden;
+
+  margin-bottom: 30px;
+}
+
+.titre-tableau {
+  padding: 23px 25px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #eee;
+}
+
+.titre-tableau p {
+  margin: 0 0 5px;
+
+  color: #999;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+.titre-tableau h3 {
+  margin: 0;
+
+  font-size: 18px;
+}
+
+.titre-tableau > span {
+  color: #888;
+
+  font-size: 10px;
+}
+
+
+/* =========================================================
+   TABLEAU WRAPPER
+========================================================= */
+
+.tableau-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+
+/* =========================================================
+   TABLEAU PRÉSENCES
+========================================================= */
+
+.tableau-presences {
+  width: 100%;
+
+  min-width: 900px;
+
+  border-collapse: collapse;
+}
+
+.tableau-presences thead {
+  background: #fafafa;
+}
+
+.tableau-presences th {
+  padding: 13px 18px;
+
+  text-align: left;
+
+  border-bottom: 1px solid #eee;
+
+  color: #888;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 1px;
+
+  white-space: nowrap;
+}
+
+.tableau-presences td {
+  padding: 14px 18px;
+
+  border-bottom: 1px solid #eee;
+
+  color: #555;
+
+  font-size: 11px;
+
+  white-space: nowrap;
+}
+
+.tableau-presences tbody tr {
+  transition: 0.15s ease;
+}
+
+.tableau-presences tbody tr:hover {
+  background: #fafafa;
+}
+
+.tableau-presences td strong {
+  color: #222;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   BADGES STATUT
+========================================================= */
+
+.badge {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px 9px;
+
+  border-radius: 20px;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.3px;
+}
+
+.badge.membre {
+  background: #eaf7ef;
+
+  color: #257243;
+}
+
+.badge.non-membre {
+  background: #f1f1f1;
+
+  color: #666;
+}
+
+.badge.nouveau {
+  background: #fff4df;
+
+  color: #9b681b;
+}
+
+
+/* =========================================================
+   ÉTAT TABLEAU
+========================================================= */
+
+.etat-tableau {
+  min-height: 280px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  color: #888;
+}
+
+.chargement {
+  color: #777;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  animation: clignoter 1.2s infinite;
+}
+
+@keyframes clignoter {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.aucune-donnee strong {
+  display: block;
+
+  color: #444;
+
+  font-size: 12px;
+}
+
+.aucune-donnee p {
+  margin-top: 8px;
+
+  color: #999;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   SECTION ACTIVITÉ
+========================================================= */
+
+.section-activite {
+  background: white;
+
+  border: 1px solid #e4e4e4;
+
+  border-radius: 9px;
+
+  overflow: hidden;
+
+  margin-bottom: 25px;
+}
+
+
+/* =========================================================
+   TITRE ACTIVITÉ
+========================================================= */
+
+.titre-activite {
+  padding: 25px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+
+  border-bottom: 1px solid #eee;
+}
+
+.titre-activite p {
+  margin: 0 0 6px;
+
+  color: #999;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+.titre-activite h2 {
+  margin: 0;
+
+  font-size: 21px;
+
+  letter-spacing: -0.5px;
+}
+
+.titre-activite > div:first-child > span {
+  display: block;
+
+  margin-top: 6px;
+
+  color: #999;
+
+  font-size: 10px;
+
+  text-transform: capitalize;
+}
+
+
+/* =========================================================
+   RÉSUMÉ ACTIVITÉ
+========================================================= */
+
+.resume-activite {
+  display: flex;
+
+  align-items: stretch;
+
+  border: 1px solid #eee;
+
+  border-radius: 7px;
+
+  overflow: hidden;
+}
+
+.resume-activite div {
+  min-width: 90px;
+
+  padding: 10px 14px;
+
+  text-align: center;
+
+  border-right: 1px solid #eee;
+}
+
+.resume-activite div:last-child {
+  border-right: none;
+}
+
+.resume-activite strong {
+  display: block;
+
+  font-size: 19px;
+
+  color: #222;
+}
+
+.resume-activite span {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #999;
+
+  font-size: 7px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.8px;
+}
+
+
+/* =========================================================
+   LÉGENDE ACTIVITÉ
+========================================================= */
+
+.legende-activite {
+  padding: 15px 25px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 20px;
+
+  border-bottom: 1px solid #eee;
+
+  flex-wrap: wrap;
+}
+
+.legende-activite span {
+  display: flex;
+
+  align-items: center;
+
+  gap: 6px;
+
+  color: #777;
+
+  font-size: 8px;
+
+  font-weight: 700;
+}
+
+.legende-activite b {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  display: inline-block;
+}
+
+.point-super-actif {
+  background: #111;
+}
+
+.point-actif {
+  background: #555;
+}
+
+.point-a-suivre {
+  background: #999;
+}
+
+.point-non-actif {
+  background: #d5d5d5;
+}
+
+
+/* =========================================================
+   TABLEAU ACTIVITÉ
+========================================================= */
+
+.tableau-activite-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.tableau-activite {
+  width: 100%;
+
+  min-width: 850px;
+
+  border-collapse: collapse;
+}
+
+.tableau-activite thead {
+  background: #fafafa;
+}
+
+.tableau-activite th {
+  padding: 13px 16px;
+
+  text-align: center;
+
+  color: #888;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.8px;
+
+  border-bottom: 1px solid #eee;
+
+  white-space: nowrap;
+}
+
+.tableau-activite th:first-child {
+  text-align: left;
+}
+
+.tableau-activite th small {
+  display: block;
+
+  margin-top: 4px;
+
+  color: #aaa;
+
+  font-size: 8px;
+
+  font-weight: 400;
+
+  letter-spacing: 0;
+}
+
+.tableau-activite td {
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #eee;
+
+  text-align: center;
+
+  font-size: 11px;
+
+  color: #555;
+}
+
+.tableau-activite td:first-child {
+  text-align: left;
+}
+
+.tableau-activite tbody tr:hover {
+  background: #fafafa;
+}
+
+
+/* =========================================================
+   PERSONNE ACTIVITÉ
+========================================================= */
+
+.personne-activite {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.avatar-activite {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #ededed;
+
+  color: #444;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  font-size: 10px;
+
+  font-weight: 800;
+}
+
+.personne-activite strong {
+  display: block;
+
+  color: #222;
+
+  font-size: 11px;
+}
+
+.personne-activite small {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #999;
+
+  font-size: 9px;
+}
+
+
+/* =========================================================
+   CELLULES SAMEDI
+========================================================= */
+
+.cellule-samedi {
+  width: 90px;
+}
+
+.presence-oui {
+  width: 25px;
+  height: 25px;
+
+  margin: auto;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #eaf7ef;
+
+  color: #257243;
+
+  border-radius: 50%;
+
+  font-size: 12px;
+
+  font-weight: 800;
+}
+
+.presence-non {
+  color: #ccc;
+
+  font-size: 16px;
+}
+
+
+/* =========================================================
+   TOTAL ACTIVITÉ
+========================================================= */
+
+.total-activite {
+  font-size: 14px;
+
+  color: #222;
+}
+
+
+/* =========================================================
+   BADGES ACTIVITÉ
+========================================================= */
+
+.badge-activite {
+  display: inline-flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 6px 10px;
+
+  border-radius: 20px;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  white-space: nowrap;
+}
+
+.badge-activite.super-actif {
+  background: #111;
+
+  color: white;
+}
+
+.badge-activite.actif {
+  background: #e9e9e9;
+
+  color: #333;
+}
+
+.badge-activite.a-suivre {
+  background: #f3f3f3;
+
+  color: #777;
+}
+
+.badge-activite.non-actif {
+  background: #fafafa;
+
+  color: #aaa;
+
+  border: 1px solid #eee;
+}
+
+
+/* =========================================================
+   ÉTAT ACTIVITÉ
+========================================================= */
+
+.etat-activite {
+  min-height: 250px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.etat-activite strong {
+  color: #444;
+
+  font-size: 12px;
+}
+
+.etat-activite p {
+  margin-top: 8px;
+
+  color: #999;
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   BLOC EXPLICATION
+========================================================= */
+
+.bloc-explication {
+  background: #1c1c1c;
+
+  color: white;
+
+  border-radius: 9px;
+
+  padding: 25px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 35px;
+
+  margin-bottom: 25px;
+}
+
+.bloc-explication > div:first-child {
+  flex: 1;
+}
+
+.bloc-explication > div:first-child > span {
+  color: #999;
+
+  font-size: 8px;
+
+  font-weight: 800;
+
+  letter-spacing: 2px;
+}
+
+.bloc-explication h3 {
+  margin: 8px 0;
+
+  font-size: 18px;
+}
+
+.bloc-explication p {
+  margin: 0;
+
+  max-width: 650px;
+
+  color: #aaa;
+
+  font-size: 11px;
+
+  line-height: 1.7;
+}
+
+
+/* =========================================================
+   STATUTS ACTIVITÉ
+========================================================= */
+
+.statuts-activite {
+  display: flex;
+
+  border: 1px solid #444;
+
+  border-radius: 7px;
+
+  overflow: hidden;
+}
+
+.statuts-activite div {
+  min-width: 85px;
+
+  padding: 12px;
+
+  text-align: center;
+
+  border-right: 1px solid #444;
+}
+
+.statuts-activite div:last-child {
+  border-right: none;
+}
+
+.statuts-activite strong {
+  display: block;
+
+  font-size: 17px;
+
+  color: white;
+}
+
+.statuts-activite span {
+  display: block;
+
+  margin-top: 5px;
+
+  color: #888;
+
+  font-size: 7px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.admin-footer {
+  padding: 20px 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  color: #999;
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+  border-top: 1px solid #e3e3e3;
+}
+
+
+/* =========================================================
+   TABLETTE
+========================================================= */
+
+@media (max-width: 1100px) {
+
+  .admin-contenu {
+    padding: 30px;
+  }
+
+  .cartes-statistiques {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .titre-activite {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .resume-activite {
+    width: 100%;
+  }
+
+  .resume-activite div {
+    flex: 1;
+  }
+
+  .bloc-explication {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .statuts-activite {
+    width: 100%;
+  }
+
+  .statuts-activite div {
+    flex: 1;
+  }
+
+}
+
+
+/* =========================================================
+   TABLETTE PETITE
+========================================================= */
+
+@media (max-width: 850px) {
+
+  .admin-sidebar {
+    width: 75px;
+
+    padding: 25px 10px;
+  }
+
+  .admin-logo {
+    padding: 5px 0 35px;
+
+    text-align: center;
+
+    font-size: 16px;
+  }
+
+  .admin-logo span {
+    font-size: 7px;
+
+    letter-spacing: 1px;
+  }
+
+  .admin-menu a {
+    justify-content: center;
+
+    padding: 13px 5px;
+  }
+
+  .admin-menu a strong {
+    display: none;
+  }
+
+  .admin-menu a span {
+    margin: 0;
+
+    width: auto;
+  }
+
+  .admin-indicateur {
+    justify-content: center;
+
+    font-size: 0;
+  }
+
+  .retour-site {
+    display: block;
+
+    text-align: center;
+
+    font-size: 0;
+  }
+
+  .retour-site::first-letter {
+    font-size: 18px;
+  }
+
+  .admin-contenu {
+    margin-left: 75px;
+
+    width: calc(100% - 75px);
+
+    padding: 25px 20px;
+  }
+
+  .admin-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 20px;
+  }
+
+  .admin-actions {
+    width: 100%;
+
+    justify-content: space-between;
+  }
+
+  .outils-admin {
+    flex-direction: column;
+
+    align-items: stretch;
+  }
+
+  .filtre-admin {
+    width: 100%;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+  .admin-sidebar {
+    width: 60px;
+
+    padding: 20px 7px;
+  }
+
+  .admin-logo {
+    font-size: 13px;
+
+    padding-bottom: 30px;
+  }
+
+  .admin-logo span {
+    font-size: 6px;
+  }
+
+  .admin-menu {
+    gap: 5px;
+  }
+
+  .admin-menu a {
+    padding: 12px 4px;
+  }
+
+  .admin-menu a span {
+    font-size: 15px;
+  }
+
+  .admin-contenu {
+    margin-left: 60px;
+
+    width: calc(100% - 60px);
+
+    padding: 20px 12px 30px;
+  }
+
+  .admin-header h1 {
+    font-size: 23px;
+  }
+
+  .admin-actions {
+    align-items: stretch;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+  .bouton-actualiser {
+    width: 100%;
+  }
+
+  .profil-admin {
+    padding: 10px 0;
+  }
+
+  .admin-introduction {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 15px;
+  }
+
+  .admin-introduction h2 {
+    font-size: 18px;
+  }
+
+  .date-tableau {
+    width: 100%;
+  }
+
+  .cartes-statistiques {
+    grid-template-columns: 1fr 1fr;
+
+    gap: 8px;
+  }
+
+  .carte-statistique {
+    padding: 14px;
+
+    gap: 9px;
+  }
+
+  .icone-statistique {
+    width: 29px;
+    height: 29px;
+
+    font-size: 8px;
+  }
+
+  .carte-statistique p {
+    font-size: 7px;
+  }
+
+  .carte-statistique strong {
+    font-size: 22px;
+  }
+
+  .titre-tableau {
+    padding: 18px;
+
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+  .titre-tableau h3 {
+    font-size: 16px;
+  }
+
+  .outils-admin {
+    padding: 15px;
+  }
+
+  .titre-activite {
+    padding: 18px;
+  }
+
+  .titre-activite h2 {
+    font-size: 18px;
+  }
+
+  .resume-activite {
+    overflow-x: auto;
+  }
+
+  .resume-activite div {
+    min-width: 85px;
+  }
+
+  .legende-activite {
+    padding: 14px 18px;
+
+    gap: 12px;
+  }
+
+  .bloc-explication {
+    padding: 20px;
+
+    gap: 20px;
+  }
+
+  .bloc-explication h3 {
+    font-size: 16px;
+  }
+
+  .statuts-activite {
+    width: 100%;
+
+    overflow-x: auto;
+  }
+
+  .statuts-activite div {
+    min-width: 75px;
+
+    padding: 10px 8px;
+  }
+
+  .admin-footer {
+    flex-direction: column;
+
+    gap: 8px;
+
+    align-items: flex-start;
+  }
+
+}
+
+
+/* =========================================================
+   TRÈS PETIT MOBILE
+========================================================= */
+
+@media (max-width: 400px) {
+
+  .admin-sidebar {
+    width: 52px;
+  }
+
+  .admin-contenu {
+    margin-left: 52px;
+
+    width: calc(100% - 52px);
+
+    padding: 18px 9px 25px;
+  }
+
+  .cartes-statistiques {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header h1 {
+    font-size: 21px;
+  }
+
+  .admin-introduction h2 {
+    font-size: 17px;
+  }
+
+}
