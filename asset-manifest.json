@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/Bloom-Teams/static/css/main.0ffb7928.css",
+    "main.js": "/Bloom-Teams/static/js/main.44a733a2.js",
+    "static/js/453.be7c58d0.chunk.js": "/Bloom-Teams/static/js/453.be7c58d0.chunk.js",
+    "index.html": "/Bloom-Teams/index.html",
+    "main.0ffb7928.css.map": "/Bloom-Teams/static/css/main.0ffb7928.css.map",
+    "main.44a733a2.js.map": "/Bloom-Teams/static/js/main.44a733a2.js.map",
+    "453.be7c58d0.chunk.js.map": "/Bloom-Teams/static/js/453.be7c58d0.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.0ffb7928.css",
+    "static/js/main.44a733a2.js"
+  ]
+}
