@@ -10,13 +10,13 @@ import db from "./firebase";
 ========================================================= */
 
 const photos = [
-  "/images/1.jpeg",
-  "/images/2.jpeg",
-  "/images/3.jpeg",
-  "/images/4.jpeg",
-  "/images/5.jpeg",
-  "/images/6.jpeg",
-  "/images/7.jpeg",
+  process.env.PUBLIC_URL + "/images/1.jpeg",
+  process.env.PUBLIC_URL + "/images/2.jpeg",
+  process.env.PUBLIC_URL + "/images/3.jpeg",
+  process.env.PUBLIC_URL + "/images/4.jpeg",
+  process.env.PUBLIC_URL + "/images/5.jpeg",
+  process.env.PUBLIC_URL + "/images/6.jpeg",
+  process.env.PUBLIC_URL + "/images/7.jpeg",
 ];
 
 /* =========================================================
