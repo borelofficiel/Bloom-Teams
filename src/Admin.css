@@ -412,7 +412,7 @@ select {
 
 
 /* =========================================================
-   DATE / TOTAL PRÉSENCES
+   DATE / TOTAL PERSONNES
 ========================================================= */
 
 .date-tableau {
@@ -482,7 +482,7 @@ select {
 .cartes-statistiques {
   display: grid;
 
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
 
   gap: 15px;
 
@@ -726,7 +726,7 @@ select {
 .tableau-presences {
   width: 100%;
 
-  min-width: 900px;
+  min-width: 1000px;
 
   border-collapse: collapse;
 }
@@ -781,41 +781,53 @@ select {
 
 
 /* =========================================================
+   BADGE ID (BT-XXXX)
+========================================================= */
+
+.badge-id {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #0a3663;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  font-family: "Courier New", monospace;
+}
+
+
+/* =========================================================
    BADGES STATUT
 ========================================================= */
 
-.badge {
+.badge.membre,
+.badge-membre {
   display: inline-flex;
-
   align-items: center;
   justify-content: center;
-
   padding: 5px 9px;
-
   border-radius: 20px;
-
   font-size: 8px;
-
   font-weight: 800;
-
   letter-spacing: 0.3px;
 }
 
-.badge.membre {
+.badge.membre,
+.badge-membre {
   background: #eaf7ef;
-
   color: #257243;
 }
 
-.badge.non-membre {
+.badge.non-membre,
+.badge-non-membre {
   background: #f1f1f1;
-
   color: #666;
 }
 
-.badge.nouveau {
+.badge.nouveau,
+.badge-nouveau {
   background: #fff4df;
-
   color: #9b681b;
 }
 
@@ -1176,6 +1188,18 @@ select {
   font-size: 11px;
 }
 
+.personne-activite strong .badge-id-mini {
+  display: inline-block;
+  padding: 2px 8px;
+  background: #0a3663;
+  color: #ffffff;
+  border-radius: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  font-family: "Courier New", monospace;
+  margin-right: 6px;
+}
+
 .personne-activite small {
   display: block;
 
@@ -1457,7 +1481,7 @@ select {
   }
 
   .cartes-statistiques {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .titre-activite {
@@ -1581,6 +1605,10 @@ select {
 
   .filtre-admin {
     width: 100%;
+  }
+
+  .cartes-statistiques {
+    grid-template-columns: repeat(2, 1fr);
   }
 
 }
@@ -1794,4 +1822,386 @@ select {
     font-size: 17px;
   }
 
+}
+
+/* =========================================================
+   SECTION STATISTIQUES
+========================================================= */
+
+.section-statistiques {
+  background: white;
+  border: 1px solid #e4e4e4;
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  padding: 25px;
+}
+
+.grille-graphiques {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 25px;
+}
+
+.carte-graphique {
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 9px;
+  padding: 20px;
+  transition: 0.2s ease;
+}
+
+.carte-graphique:hover {
+  border-color: #ccc;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.carte-graphique h4 {
+  margin: 0 0 15px;
+  color: #333;
+  font-size: 11px;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* =========================================================
+   SECTION EXPORT EXCEL
+========================================================= */
+
+.section-export {
+  background: white;
+  border: 1px solid #e4e4e4;
+  border-radius: 9px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  padding: 25px;
+}
+
+.titre-export {
+  margin-bottom: 20px;
+}
+
+.titre-export h3 {
+  margin: 5px 0 0;
+  font-size: 18px;
+}
+
+.titre-export p {
+  margin: 8px 0 0;
+  color: #777;
+  font-size: 11px;
+}
+
+.boutons-export {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.bouton-export {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 18px;
+  border: none;
+  border-radius: 9px;
+  background: #0a3663;
+  color: white;
+  cursor: pointer;
+  transition: 0.25s ease;
+  text-align: left;
+}
+
+.bouton-export:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(10, 54, 99, 0.3);
+}
+
+.bouton-export:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bouton-export .icon-export {
+  font-size: 20px;
+  margin-right: 10px;
+}
+
+.bouton-export strong {
+  display: block;
+  font-size: 12px;
+}
+
+.bouton-export small {
+  display: block;
+  font-size: 9px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.bouton-export .arrow-export {
+  font-size: 18px;
+  opacity: 0.7;
+}
+
+.bouton-export:hover:not(:disabled) .arrow-export {
+  opacity: 1;
+  transform: translateX(3px);
+  transition: 0.2s ease;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+  .grille-graphiques {
+    grid-template-columns: 1fr;
+  }
+
+  .boutons-export {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .section-statistiques {
+    padding: 15px;
+  }
+
+  .carte-graphique {
+    padding: 15px;
+  }
+
+  .carte-graphique h4 {
+    font-size: 10px;
+  }
+
+  .boutons-export {
+    grid-template-columns: 1fr;
+  }
+
+  .bouton-export {
+    padding: 12px 15px;
+  }
+}
+
+
+/* =========================================================
+   PAGE DE CONNEXION
+========================================================= */
+
+.connexion-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f8;
+  padding: 20px;
+}
+
+.connexion-box {
+  width: 100%;
+  max-width: 420px;
+  background: white;
+  border: 2px solid #050505;
+  border-radius: 12px;
+  padding: 45px 35px;
+  box-shadow: 8px 8px 0 #050505;
+  transition: 0.3s ease;
+}
+
+.connexion-box:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 12px 12px 0 #050505;
+}
+
+.connexion-logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.connexion-logo span {
+  display: block;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  color: #050505;
+}
+
+.connexion-logo span::first-letter {
+  color: #ff007f;
+}
+
+.connexion-logo small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.connexion-box h2 {
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  color: #050505;
+}
+
+.connexion-sous-titre {
+  text-align: center;
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 30px;
+}
+
+.connexion-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.connexion-groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.connexion-groupe label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: #555;
+}
+
+.connexion-groupe input {
+  height: 48px;
+  padding: 0 14px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+  background: #fafafa;
+}
+
+.connexion-groupe input:focus {
+  border-color: #ff007f;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(255, 0, 127, 0.1);
+}
+
+.connexion-groupe input::placeholder {
+  color: #bbb;
+}
+
+.connexion-erreur {
+  background: #fff1f1;
+  border: 1px solid #e5caca;
+  color: #9c3535;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.connexion-bouton {
+  height: 52px;
+  background: #ff007f;
+  color: white;
+  border: 2px solid #050505;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.connexion-bouton:hover {
+  background: #050505;
+  transform: translate(-3px, -3px);
+  box-shadow: 6px 6px 0 #ff007f;
+}
+
+.connexion-bouton:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+.connexion-pied {
+  text-align: center;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.connexion-pied span {
+  font-size: 9px;
+  color: #aaa;
+  letter-spacing: 1px;
+}
+
+/* =========================================================
+   BOUTON DÉCONNEXION
+========================================================= */
+
+.bouton-deconnexion {
+  background: transparent;
+  border: none;
+  color: #aaa;
+  font-size: 11px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: 0.2s ease;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.bouton-deconnexion:hover {
+  color: white;
+}
+
+
+/* =========================================================
+   RESPONSIVE CONNEXION
+========================================================= */
+
+@media (max-width: 480px) {
+  .connexion-box {
+    padding: 30px 20px;
+    box-shadow: 4px 4px 0 #050505;
+  }
+
+  .connexion-box:hover {
+    box-shadow: 6px 6px 0 #050505;
+  }
+
+  .connexion-logo span {
+    font-size: 26px;
+  }
+
+  .connexion-box h2 {
+    font-size: 18px;
+  }
+
+  .connexion-groupe input {
+    height: 42px;
+    font-size: 13px;
+  }
+
+  .connexion-bouton {
+    height: 44px;
+    font-size: 10px;
+  }
 }

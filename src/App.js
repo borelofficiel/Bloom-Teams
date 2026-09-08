@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import Admin from "./Admin";
 
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs, runTransaction, doc } from "firebase/firestore";
 import db from "./firebase";
 
 /* =========================================================
    PHOTOS
 ========================================================= */
 
-const photos = [
+const photos = [ 
   process.env.PUBLIC_URL + "/images/1.jpeg",
   process.env.PUBLIC_URL + "/images/2.jpeg",
   process.env.PUBLIC_URL + "/images/3.jpeg",
@@ -54,6 +54,7 @@ function App() {
   ======================================================= */
 
   const [photoActuelle, setPhotoActuelle] = useState(0);
+  const [photoGalerieMobile, setPhotoGalerieMobile] = useState(0);
 
   /* =======================================================
      FORMULAIRE
@@ -71,11 +72,77 @@ function App() {
      FIREBASE
   ======================================================= */
 
-  const [enregistrementEnCours, setEnregistrementEnCours] =
-    useState(false);
+  const [enregistrementEnCours, setEnregistrementEnCours] = useState(false);
+  const [erreurEnregistrement, setErreurEnregistrement] = useState("");
 
-  const [erreurEnregistrement, setErreurEnregistrement] =
-    useState("");
+  /* =======================================================
+     BOUTON RETOUR EN HAUT
+  ======================================================= */
+
+  const [afficherBoutonHaut, setAfficherBoutonHaut] = useState(false);
+
+  /* =========================================================
+     NOUVEAU : FONCTIONS DE RECHERCHE ET GÉNÉRATION ID
+  ========================================================= */
+
+  // Rechercher une personne existante par nom + prénom + téléphone
+  const rechercherPersonne = async (nomRecherche, prenomRecherche, telephoneRecherche) => {
+    try {
+      const personnesRef = collection(db, 'personnes');
+      const q = query(
+        personnesRef,
+        where('nom', '==', nomRecherche.trim().toUpperCase()),
+        where('prenom', '==', prenomRecherche.trim()),
+        where('telephone', '==', telephoneRecherche.trim())
+      );
+      
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        return null;
+      }
+      
+      const doc = querySnapshot.docs[0];
+      return {
+        id: doc.id,
+        ...doc.data()
+      };
+    } catch (error) {
+      console.error('Erreur lors de la recherche:', error);
+      throw error;
+    }
+  };
+
+  // Générer un nouvel ID BT-XXXX avec transaction (commence à 0)
+  const genererNouvelId = async () => {
+    try {
+      const counterRef = doc(db, 'personnes', '_counter');
+      
+      const result = await runTransaction(db, async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        
+        // Le compteur commence à 0
+        let currentId = 0;
+        
+        if (counterDoc.exists()) {
+          currentId = counterDoc.data().currentId || 0;
+        }
+        
+        // L'ID généré est currentId + 1
+        const nouveauId = `BT-${String(currentId + 1).padStart(4, '0')}`;
+        
+        // Incrémenter le compteur
+        transaction.set(counterRef, { currentId: currentId + 1 });
+        
+        return nouveauId;
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Erreur génération ID:', error);
+      throw error;
+    }
+  };
 
   /* =========================================================
      DÉFILEMENT GALERIE
@@ -87,12 +154,49 @@ function App() {
         if (anciennePhoto === photos.length - 1) {
           return 0;
         }
-
         return anciennePhoto + 1;
       });
     }, 4500);
 
     return () => clearInterval(defilement);
+  }, []);
+
+  /* =========================================================
+     AUTOPLAY CARROUSEL MOBILE
+  ========================================================= */
+
+  useEffect(() => {
+    const isMobile = window.innerWidth < 650;
+    if (!isMobile) return;
+    
+    const interval = setInterval(() => {
+      setPhotoGalerieMobile((ancienne) => {
+        if (ancienne === photos.length - 1) return 0;
+        return ancienne + 1;
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  /* =========================================================
+     GESTION DU SCROLL POUR LE BOUTON RETOUR EN HAUT
+  ========================================================= */
+
+  useEffect(() => {
+    const gererScroll = () => {
+      if (window.scrollY > 500) {
+        setAfficherBoutonHaut(true);
+      } else {
+        setAfficherBoutonHaut(false);
+      }
+    };
+
+    window.addEventListener("scroll", gererScroll);
+
+    return () => {
+      window.removeEventListener("scroll", gererScroll);
+    };
   }, []);
 
   /* =========================================================
@@ -104,7 +208,6 @@ function App() {
       if (anciennePhoto === 0) {
         return photos.length - 1;
       }
-
       return anciennePhoto - 1;
     });
   };
@@ -118,13 +221,41 @@ function App() {
       if (anciennePhoto === photos.length - 1) {
         return 0;
       }
-
       return anciennePhoto + 1;
     });
   };
 
   /* =========================================================
-     ENVOI DU FORMULAIRE
+     CONTROLES CARROUSEL MOBILE
+  ========================================================= */
+
+  const photoGaleriePrecedente = () => {
+    setPhotoGalerieMobile((ancienne) => {
+      if (ancienne === 0) return photos.length - 1;
+      return ancienne - 1;
+    });
+  };
+
+  const photoGalerieSuivante = () => {
+    setPhotoGalerieMobile((ancienne) => {
+      if (ancienne === photos.length - 1) return 0;
+      return ancienne + 1;
+    });
+  };
+
+  /* =========================================================
+     RETOUR EN HAUT
+  ========================================================= */
+
+  const retourEnHaut = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth"
+    });
+  };
+
+  /* =========================================================
+     ENVOI DU FORMULAIRE (MODIFIÉ)
   ========================================================= */
 
   const envoyerFormulaire = async (evenement) => {
@@ -136,19 +267,48 @@ function App() {
     try {
       const maintenant = new Date();
 
-      const datePresence =
-        maintenant.toLocaleDateString("fr-FR");
+      const datePresence = maintenant.toLocaleDateString("fr-FR");
+      const heurePresence = maintenant.toLocaleTimeString("fr-FR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
 
-      const heurePresence =
-        maintenant.toLocaleTimeString("fr-FR", {
-          hour: "2-digit",
-          minute: "2-digit",
+      const nomTrim = nom.trim().toUpperCase();
+      const prenomTrim = prenom.trim();
+      const telephoneTrim = telephone.trim();
+
+      // 1. RECHERCHER SI LA PERSONNE EXISTE DÉJÀ
+      let personneExistante = await rechercherPersonne(nomTrim, prenomTrim, telephoneTrim);
+      let personneId;
+
+      if (personneExistante) {
+        // Personne trouvée - récupérer son ID
+        personneId = personneExistante.personneId;
+        console.log(`✅ Personne trouvée : ${personneId}`);
+      } else {
+        // 2. PERSONNE NON TROUVÉE - CRÉER UN NOUVEL ID
+        personneId = await genererNouvelId();
+        console.log(`🆕 Nouvelle personne créée : ${personneId}`);
+        
+        // 3. CRÉER LE DOCUMENT DANS LA COLLECTION PERSONNES
+        const personnesRef = collection(db, 'personnes');
+        await addDoc(personnesRef, {
+          personneId: personneId,
+          nom: nomTrim,
+          prenom: prenomTrim,
+          telephone: telephoneTrim,
+          statut: statut || 'Oui',
+          departement: departement || '',
+          dateCreation: serverTimestamp()
         });
+      }
 
+      // 4. ENREGISTRER LA PRÉSENCE
       await addDoc(collection(db, "presences"), {
-        nom: nom.trim().toUpperCase(),
-        prenom: prenom.trim(),
-        telephone: telephone.trim(),
+        personneId: personneId,
+        nom: nomTrim,
+        prenom: prenomTrim,
+        telephone: telephoneTrim,
         statut: statut,
         departement: departement,
         date: datePresence,
@@ -156,20 +316,14 @@ function App() {
         dateEnregistrement: serverTimestamp(),
       });
 
-      console.log("Présence enregistrée avec succès.");
-
+      console.log(`✅ Présence enregistrée pour ${personneId}`);
       setFormulaireEnvoye(true);
 
     } catch (erreur) {
-      console.error(
-        "Erreur lors de l'enregistrement :",
-        erreur
-      );
-
+      console.error("Erreur lors de l'enregistrement :", erreur);
       setErreurEnregistrement(
         "Impossible d'enregistrer ta présence. Vérifie ta connexion Internet et réessaie."
       );
-
     } finally {
       setEnregistrementEnCours(false);
     }
@@ -212,7 +366,7 @@ function App() {
 
         <a href="#accueil" className="logo">
           <img
-            src="/images/LOGO.PNG"
+            src={process.env.PUBLIC_URL + "/images/LOGO.PNG"}
             alt="BLOOM AVF"
           />
         </a>
@@ -237,12 +391,25 @@ function App() {
 
         </nav>
 
-        <a
-          href="#presence"
-          className="bouton-en-tête"
-        >
-          PRÉSENCE <span>↗</span>
-        </a>
+        <div className="boutons-droite">
+          <a
+            href="#admin"
+            className="bouton-admin"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = "admin";
+            }}
+          >
+            ADMIN
+          </a>
+
+          <a
+            href="#presence"
+            className="bouton-en-tete"
+          >
+            PRÉSENCE <span>↗</span>
+          </a>
+        </div>
 
       </header>
 
@@ -338,42 +505,6 @@ function App() {
         </section>
 
         {/* ===================================================
-            BANDE DÉFILANTE
-        =================================================== */}
-
-        <div className="bande-defilante">
-
-          <div className="contenu-defilant">
-
-            <span>BLOOM</span>
-            <b>✦</b>
-
-            <span>GRANDIR</span>
-            <b>✦</b>
-
-            <span>SERVIR</span>
-            <b>✦</b>
-
-            <span>PORTER DU FRUIT</span>
-            <b>✦</b>
-
-            <span>BLOOM</span>
-            <b>✦</b>
-
-            <span>GRANDIR</span>
-            <b>✦</b>
-
-            <span>SERVIR</span>
-            <b>✦</b>
-
-            <span>PORTER DU FRUIT</span>
-            <b>✦</b>
-
-          </div>
-
-        </div>
-
-        {/* ===================================================
             À PROPOS
         =================================================== */}
 
@@ -425,10 +556,7 @@ function App() {
             GALERIE
         =================================================== */}
 
-        <section
-          className="section-galerie"
-          id="galerie"
-        >
+        <section className="section-galerie" id="galerie">
 
           <div className="en-tete-galerie">
 
@@ -446,20 +574,10 @@ function App() {
 
             </div>
 
-            <div className="autocollant-galerie">
-
-              <strong>07</strong>
-
-              PHOTOS
-              <br />
-
-              BLOOM
-
-            </div>
-
           </div>
 
-          <div className="grille-galerie">
+          {/* GALERIE - GRILLE (Desktop) */}
+          <div className="grille-galerie grille-desktop">
 
             {photos.map((photo, index) => (
 
@@ -492,6 +610,69 @@ function App() {
               </div>
 
             ))}
+
+          </div>
+
+          {/* GALERIE - CARROUSEL (Mobile) */}
+          <div className="carrousel-mobile">
+
+            <div className="carrousel-track">
+
+              {photos.map((photo, index) => (
+
+                <div
+                  key={photo}
+                  className={`carrousel-slide ${index === photoGalerieMobile ? "actif" : ""}`}
+                >
+                  <img
+                    src={photo}
+                    alt={`Galerie BLOOM ${index + 1}`}
+                  />
+                  <div className="legende-carrousel">
+                    <span>BLOOM</span>
+                    <span>0{index + 1} / {String(photos.length).padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+              ))}
+
+            </div>
+
+            {/* Contrôles du carrousel */}
+            <div className="controle-carrousel">
+
+              <button
+                onClick={photoGaleriePrecedente}
+                aria-label="Photo précédente"
+              >
+                ←
+              </button>
+
+              <span>
+                {String(photoGalerieMobile + 1).padStart(2, "0")}
+                {" / "}
+                {String(photos.length).padStart(2, "0")}
+              </span>
+
+              <button
+                onClick={photoGalerieSuivante}
+                aria-label="Photo suivante"
+              >
+                →
+              </button>
+
+            </div>
+
+            {/* Indicateurs */}
+            <div className="indicateurs-carrousel">
+              {photos.map((_, index) => (
+                <span
+                  key={index}
+                  className={`point-indicateur ${index === photoGalerieMobile ? "actif" : ""}`}
+                  onClick={() => setPhotoGalerieMobile(index)}
+                />
+              ))}
+            </div>
 
           </div>
 
@@ -738,10 +919,12 @@ function App() {
 
                     {[
                       "ACCUEIL",
-                      "LOUANGE",
+                      "CHANTRE",
+                      "GESTION DU CULTE",
+                      "MRES",
+                      "INTERCESION",
                       "COMMUNICATION",
                       "ADN",
-                      "JEUNESSE",
                       "AUTRE",
                     ].map((nomDepartement) => (
 
@@ -856,6 +1039,18 @@ function App() {
         </section>
 
       </main>
+
+      {/* =====================================================
+          BOUTON RETOUR EN HAUT
+      ===================================================== */}
+
+      <button
+        className={`bouton-retour-haut ${afficherBoutonHaut ? "visible" : ""}`}
+        onClick={retourEnHaut}
+        aria-label="Retour en haut"
+      >
+        ↑
+      </button>
 
       {/* =====================================================
           PIED DE PAGE

@@ -1,4 +1,3 @@
-css
 /* =========================================================
    BLOOM TEAMS
    DESIGN JEUNE / STREET ART
@@ -94,18 +93,17 @@ img {
 }
 
 .logo {
-  width: 95px;
-
+  width: 75px;
+  max-height: 60px;
   display: flex;
-
   align-items: center;
+  flex-shrink: 0;
 }
 
 .logo img {
   width: 100%;
-
   height: auto;
-
+  max-height: 55px;
   object-fit: contain;
 }
 
@@ -131,19 +129,42 @@ img {
   color: var(--magenta);
 }
 
+
+/* =========================================================
+   BOUTONS DROITE (ADMIN + PRÉSENCE)
+========================================================= */
+
+.boutons-droite {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bouton-admin {
+  padding: 13px 17px;
+  background: var(--magenta);
+  color: var(--blanc);
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  border: 2px solid var(--noir);
+  transition: 0.25s ease;
+}
+
+.bouton-admin:hover {
+  background: var(--noir);
+  color: var(--blanc);
+  border-color: var(--magenta);
+  transform: translateY(-2px);
+}
+
 .bouton-en-tete {
   padding: 13px 17px;
-
   background: var(--noir);
-
   color: var(--blanc);
-
   font-size: 10px;
-
   font-weight: 1000;
-
   letter-spacing: 1px;
-
   transition: 0.25s ease;
 }
 
@@ -153,7 +174,6 @@ img {
 
 .bouton-en-tete span {
   margin-left: 7px;
-
   color: var(--vert);
 }
 
@@ -421,61 +441,6 @@ img {
 
 
 /* =========================================================
-   BANDE DÉFILANTE
-========================================================= */
-
-.bande-defilante {
-  width: 100%;
-
-  overflow: hidden;
-
-  padding: 18px 0;
-
-  background: var(--vert);
-
-  border-top: 3px solid var(--noir);
-
-  border-bottom: 3px solid var(--noir);
-
-  white-space: nowrap;
-}
-
-.contenu-defilant {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 27px;
-
-  animation: defilement 25s linear infinite;
-}
-
-.contenu-defilant span {
-  font-size: 13px;
-
-  font-weight: 1000;
-
-  letter-spacing: 2px;
-}
-
-.contenu-defilant b {
-  color: var(--magenta);
-
-  font-size: 16px;
-}
-
-@keyframes defilement {
-  from {
-    transform: translateX(0);
-  }
-
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-
-/* =========================================================
    À PROPOS
 ========================================================= */
 
@@ -583,45 +548,9 @@ img {
 
   flex-direction: column;
 
-  gap: 35px;
+  gap: 20px;
 
-  margin-bottom: 55px;
-}
-
-.autocollant-galerie {
-  width: 120px;
-
-  height: 120px;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: center;
-
-  align-items: center;
-
-  text-align: center;
-
-  background: var(--cyan);
-
-  border: 3px solid var(--noir);
-
-  border-radius: 50%;
-
-  font-size: 10px;
-
-  font-weight: 1000;
-
-  transform: rotate(7deg);
-}
-
-.autocollant-galerie strong {
-  margin-bottom: 4px;
-
-  font-size: 28px;
-
-  color: var(--bleu);
+  margin-bottom: 40px;
 }
 
 .grille-galerie {
@@ -680,6 +609,167 @@ img {
   letter-spacing: 1px;
 
   text-shadow: 1px 2px 6px var(--noir);
+}
+
+
+/* =========================================================
+   CARROUSEL MOBILE - GALERIE
+========================================================= */
+
+.carrousel-mobile {
+  display: none;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.carrousel-track {
+  display: flex;
+  transition: transform 0.5s ease;
+  height: 320px;
+}
+
+.carrousel-slide {
+  min-width: 100%;
+  height: 100%;
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  flex-shrink: 0;
+}
+
+.carrousel-slide.actif {
+  opacity: 1;
+}
+
+.carrousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.legende-carrousel {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--blanc);
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  text-shadow: 1px 2px 6px var(--noir);
+}
+
+.controle-carrousel {
+  position: absolute;
+  right: 12px;
+  bottom: 60px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--noir);
+  border-radius: 4px;
+}
+
+.controle-carrousel button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--noir);
+  color: var(--blanc);
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  border-radius: 2px;
+}
+
+.controle-carrousel button:hover {
+  background: var(--magenta);
+}
+
+.controle-carrousel span {
+  font-size: 9px;
+  font-weight: 1000;
+  min-width: 40px;
+  text-align: center;
+}
+
+.indicateurs-carrousel {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.point-indicateur {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.point-indicateur.actif {
+  background: var(--magenta);
+  width: 24px;
+  border-radius: 4px;
+}
+
+
+/* =========================================================
+   BOUTON RETOUR EN HAUT
+========================================================= */
+
+.bouton-retour-haut {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 55px;
+  height: 55px;
+  border: 2px solid var(--noir);
+  border-radius: 50%;
+  background: var(--magenta);
+  color: var(--blanc);
+  font-size: 28px;
+  font-weight: 1000;
+  cursor: pointer;
+  box-shadow: 4px 4px 0 var(--noir);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+  pointer-events: none;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bouton-retour-haut.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.bouton-retour-haut:hover {
+  background: var(--noir);
+  transform: translateY(-3px);
+  box-shadow: 6px 6px 0 var(--magenta);
+}
+
+.bouton-retour-haut:active {
+  transform: translateY(1px);
+  box-shadow: 2px 2px 0 var(--noir);
 }
 
 
@@ -1350,6 +1440,11 @@ img {
 
     justify-content: space-between;
   }
+
+  /* Masquer le carrousel sur desktop */
+  .carrousel-mobile {
+    display: none !important;
+  }
 }
 
 
@@ -1527,4 +1622,603 @@ img {
     gap: 130px;
   }
 
+}
+
+
+/* =========================================================
+   RESPONSIVE MOBILE
+========================================================= */
+
+@media (max-width: 649px) {
+
+  /* EN-TÊTE */
+  .en-tete {
+    height: 65px;
+    padding: 0 4%;
+  }
+
+  .logo {
+    width: 55px;
+    max-height: 45px;
+  }
+
+  .logo img {
+    max-height: 40px;
+  }
+
+  .boutons-droite {
+    gap: 6px;
+  }
+
+  .bouton-admin {
+    padding: 8px 10px;
+    font-size: 7px;
+  }
+
+  .bouton-en-tete {
+    padding: 8px 12px;
+    font-size: 8px;
+  }
+
+  .bouton-en-tete span {
+    font-size: 10px;
+  }
+
+  /* ACCUEIL */
+  .accueil {
+    padding: 40px 5%;
+    gap: 40px;
+  }
+
+  .accueil h1 {
+    font-size: clamp(48px, 15vw, 72px);
+    letter-spacing: -4px;
+  }
+
+  .accueil h1 span {
+    padding: 0 5px;
+  }
+
+  .description-accueil {
+    font-size: 14px;
+    margin-top: 25px;
+  }
+
+  .bouton-principal {
+    padding: 14px 18px;
+    font-size: 9px;
+    gap: 20px;
+  }
+
+  .bouton-principal span {
+    font-size: 16px;
+  }
+
+  .autocollant {
+    font-size: 9px;
+    padding: 6px 12px;
+  }
+
+  .petite-etiquette {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  /* GALERIE PRINCIPALE */
+  .galerie-accueil {
+    min-height: 280px;
+  }
+
+  .photo-principale {
+    height: 260px;
+    width: 92%;
+  }
+
+  .forme-magenta {
+    width: 60px;
+    height: 60px;
+    right: 2%;
+    top: 5%;
+  }
+
+  .forme-cyan {
+    width: 50px;
+    height: 50px;
+    left: 2%;
+    bottom: 5%;
+  }
+
+  .controle-galerie {
+    padding: 5px 10px;
+    gap: 8px;
+    right: 5%;
+    bottom: -10px;
+  }
+
+  .controle-galerie button {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .controle-galerie span {
+    font-size: 8px;
+  }
+
+  /* GALERIE - Carrousel mobile */
+  .grille-desktop {
+    display: none !important;
+  }
+
+  .carrousel-mobile {
+    display: block;
+  }
+
+  .carrousel-track {
+    height: 280px;
+  }
+
+  .section-galerie {
+    padding: 50px 5%;
+  }
+
+  .en-tete-galerie {
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  /* À PROPOS */
+  .a-propos {
+    padding: 60px 5%;
+  }
+
+  .a-propos h2,
+  .section-galerie h2 {
+    font-size: clamp(38px, 10vw, 65px);
+    letter-spacing: -3px;
+    line-height: 0.9;
+  }
+
+  .a-propos h2 span,
+  .section-galerie h2 span {
+    -webkit-text-stroke: 1.5px var(--noir);
+  }
+
+  .texte-a-propos {
+    font-size: 14px;
+    margin-top: 20px;
+  }
+
+  .etiquettes span {
+    font-size: 8px;
+    padding: 6px 12px;
+  }
+
+  .numero-section {
+    font-size: 10px;
+    letter-spacing: 2px;
+  }
+
+  .symbole {
+    display: none;
+  }
+
+  /* PRÉSENCE */
+  .section-presence {
+    padding: 60px 5%;
+    gap: 40px;
+  }
+
+  .introduction-presence .numero-section {
+    margin-bottom: 15px;
+  }
+
+  .introduction-presence .petite-etiquette {
+    font-size: 8px;
+    padding: 5px 10px;
+  }
+
+  .introduction-presence h2 {
+    font-size: clamp(48px, 13vw, 70px);
+    letter-spacing: -4px;
+    margin-top: 12px;
+  }
+
+  .introduction-presence h2 span {
+    -webkit-text-stroke: 1.5px var(--noir);
+  }
+
+  .texte-presence {
+    font-size: 14px;
+    margin-top: 20px;
+  }
+
+  .decoration-formulaire {
+    font-size: 8px;
+    padding: 8px 12px;
+    margin-top: 20px;
+    box-shadow: 3px 3px 0 var(--noir);
+  }
+
+  /* FORMULAIRE */
+  .conteneur-formulaire {
+    padding: 18px;
+    box-shadow: 4px 4px 0 var(--noir);
+  }
+
+  .bloc-formulaire {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .titre-bloc {
+    font-size: 9px;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .titre-bloc span {
+    width: 24px;
+    height: 24px;
+    font-size: 8px;
+  }
+
+  .ligne-champs {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .groupe-formulaire label {
+    font-size: 8px;
+    margin-bottom: 4px;
+  }
+
+  .groupe-formulaire input[type="text"],
+  .groupe-formulaire input[type="tel"] {
+    height: 44px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+
+  /* MEMBRE */
+  .choix-horizontal {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .choix-horizontal .choix span {
+    min-height: 50px;
+    padding: 10px 14px;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .choix-horizontal .choix strong {
+    font-size: 10px;
+  }
+
+  .choix-horizontal .choix small {
+    font-size: 8px;
+    margin-top: 0;
+  }
+
+  .choix:hover span {
+    transform: translate(-1px, -1px);
+  }
+
+  .choix input:checked + span {
+    box-shadow: 3px 3px 0 var(--magenta);
+  }
+
+  /* DÉPARTEMENTS */
+  .choix-departements {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .choix-departements .choix span {
+    min-height: 40px;
+    font-size: 8px;
+    padding: 6px 8px;
+  }
+
+  .choix-departements .choix input:checked + span {
+    box-shadow: 3px 3px 0 var(--magenta);
+  }
+
+  /* BOUTON ENVOI */
+  .bouton-envoi {
+    min-height: 50px;
+    padding: 10px 16px;
+    font-size: 9px;
+  }
+
+  .bouton-envoi strong {
+    font-size: 18px;
+  }
+
+  .bouton-envoi:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 4px 4px 0 var(--vert);
+  }
+
+  /* MESSAGE SUCCÈS */
+  .message-succes {
+    min-height: 350px;
+  }
+
+  .icone-succes {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+
+  .message-succes h3 {
+    font-size: clamp(36px, 8vw, 48px);
+    letter-spacing: -3px;
+  }
+
+  .message-succes > p:not(.petite-etiquette) {
+    font-size: 14px;
+    margin-top: 18px;
+  }
+
+  .bouton-secondaire {
+    padding: 12px 16px;
+    font-size: 9px;
+  }
+
+  /* BOUTON RETOUR EN HAUT - MOBILE */
+  .bouton-retour-haut {
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    bottom: 20px;
+    right: 20px;
+    box-shadow: 3px 3px 0 var(--noir);
+  }
+
+  /* PIED DE PAGE */
+  .pied-page {
+    padding: 50px 5% 25px;
+  }
+
+  .motif-pied {
+    font-size: 50px;
+    right: -15px;
+    top: 10px;
+  }
+
+  .contenu-pied {
+    gap: 25px;
+    padding-bottom: 35px;
+  }
+
+  .logo-pied {
+    font-size: clamp(50px, 15vw, 75px);
+    letter-spacing: -5px;
+  }
+
+  .contenu-pied p {
+    font-size: 13px;
+  }
+
+  .bas-pied {
+    flex-direction: column;
+    gap: 8px;
+    font-size: 8px;
+    padding-top: 15px;
+  }
+
+}
+
+
+/* =========================================================
+   TRÈS PETIT MOBILE (moins de 400px)
+========================================================= */
+
+@media (max-width: 400px) {
+
+  .en-tete {
+    height: 55px;
+    padding: 0 3%;
+  }
+
+  .logo {
+    width: 45px;
+    max-height: 38px;
+  }
+
+  .logo img {
+    max-height: 32px;
+  }
+
+  .boutons-droite {
+    gap: 4px;
+  }
+
+  .bouton-admin {
+    padding: 5px 8px;
+    font-size: 6px;
+  }
+
+  .bouton-en-tete {
+    padding: 5px 10px;
+    font-size: 7px;
+  }
+
+  .bouton-en-tete span {
+    font-size: 8px;
+  }
+
+  .accueil {
+    padding: 30px 4%;
+    gap: 30px;
+  }
+
+  .accueil h1 {
+    font-size: clamp(36px, 12vw, 48px);
+    letter-spacing: -3px;
+  }
+
+  .photo-principale {
+    height: 200px;
+  }
+
+  .a-propos h2 {
+    font-size: clamp(30px, 8vw, 38px);
+  }
+
+  .introduction-presence h2 {
+    font-size: clamp(36px, 10vw, 48px);
+  }
+
+  .conteneur-formulaire {
+    padding: 14px;
+  }
+
+  .choix-departements {
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+
+  .choix-departements .choix span {
+    font-size: 7px;
+    min-height: 35px;
+    padding: 4px 6px;
+  }
+
+  .logo-pied {
+    font-size: clamp(40px, 12vw, 50px);
+  }
+
+  .section-presence {
+    padding: 40px 4%;
+    gap: 30px;
+  }
+
+  .image-galerie {
+    height: 180px;
+  }
+
+  .image-galerie.grande {
+    height: 240px;
+  }
+
+  /* Carrousel */
+  .carrousel-track {
+    height: 220px;
+  }
+
+  .controle-carrousel {
+    right: 8px;
+    bottom: 50px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .controle-carrousel button {
+    width: 28px;
+    height: 28px;
+    font-size: 14px;
+  }
+
+  .controle-carrousel span {
+    font-size: 8px;
+    min-width: 32px;
+  }
+
+  .point-indicateur {
+    width: 6px;
+    height: 6px;
+  }
+
+  .point-indicateur.actif {
+    width: 18px;
+  }
+
+  .legende-carrousel {
+    font-size: 8px;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+  }
+
+  /* BOUTON RETOUR EN HAUT - TRÈS PETIT */
+  .bouton-retour-haut {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+    bottom: 15px;
+    right: 15px;
+    box-shadow: 2px 2px 0 var(--noir);
+  }
+}
+
+
+/* =========================================================
+   CORRECTION POUR LE TITRE "ASSEMBLÉE VIE FRUCTUEUSE"
+========================================================= */
+
+@media (max-width: 500px) {
+  .a-propos h2 {
+    font-size: clamp(28px, 7vw, 35px) !important;
+    letter-spacing: -2px !important;
+    line-height: 1 !important;
+    word-break: break-word;
+  }
+
+  .a-propos h2 br {
+    display: block;
+  }
+
+  .a-propos h2 span {
+    display: inline-block;
+    -webkit-text-stroke: 1.5px var(--noir);
+  }
+
+  .introduction-presence h2 {
+    font-size: clamp(32px, 9vw, 48px) !important;
+    letter-spacing: -3px !important;
+    line-height: 1 !important;
+  }
+
+  .introduction-presence h2 span {
+    -webkit-text-stroke: 1.5px var(--noir);
+  }
+}
+
+
+/* =========================================================
+   CORRECTION POUR LES ÉCRANS TRÈS ÉTROITS
+========================================================= */
+
+@media (max-width: 350px) {
+  .a-propos h2 {
+    font-size: clamp(22px, 6vw, 28px) !important;
+  }
+
+  .introduction-presence h2 {
+    font-size: clamp(26px, 7vw, 32px) !important;
+  }
+
+  .choix-departements {
+    grid-template-columns: 1fr;
+  }
+
+  .choix-horizontal .choix span {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .carrousel-track {
+    height: 180px;
+  }
+
+  .controle-carrousel {
+    bottom: 44px;
+  }
 }
