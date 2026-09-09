@@ -366,9 +366,13 @@ function App() {
 
         <a href="#accueil" className="logo">
           <img
-            src={process.env.PUBLIC_URL + "/images/LOGO.PNG"}
-            alt="BLOOM AVF"
-          />
+  src={process.env.PUBLIC_URL + "/images/LOGO.PNG"}
+  alt="BLOOM AVF"
+  onError={(e) => {
+    e.target.onerror = null;
+    e.target.src = "/images/LOGO.PNG"; // Fallback
+  }}
+/>
         </a>
 
         <nav className="navigation">
