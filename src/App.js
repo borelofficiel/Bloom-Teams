@@ -366,11 +366,11 @@ function App() {
 
         <a href="#accueil" className="logo">
           <img
-  src={process.env.PUBLIC_URL + "/images/LOGO.PNG"}
+  src={process.env.PUBLIC_URL + "/images/LOGO.png"}
   alt="BLOOM AVF"
   onError={(e) => {
     e.target.onerror = null;
-    e.target.src = "/images/LOGO.PNG"; // Fallback
+    e.target.src = "/images/LOGO.png"; // Fallback
   }}
 />
         </a>
