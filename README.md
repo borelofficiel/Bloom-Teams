@@ -1,70 +1,195 @@
-# Getting Started with Create React App
+# 🌸 BLOOM TEAMS
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📖 À PROPOS
 
-## Available Scripts
+**BLOOM TEAMS** est une application web développée pour **BLOOM AVF (Assemblée Vie Fructueuse)** afin de faciliter la gestion et le suivi des présences lors des cultes.
 
-In the project directory, you can run:
+L'application a été pensée pour répondre à un besoin simple : **mieux connaître, suivre et accompagner les personnes qui participent à la vie de l'église.**
 
-### `npm start`
+## 🎯 POURQUOI BLOOM TEAMS ?
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+BLOOM TEAMS permet notamment de :
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+* Enregistrer les présences lors des cultes
+* Identifier les personnes présentes régulièrement
+* Suivre la participation sur les différents samedis du mois
+* Identifier les personnes très actives, actives, à suivre ou non actives
+* Faciliter le suivi et l'accompagnement des personnes
+* Centraliser les informations dans une base de données
+* Réduire les tâches manuelles liées au suivi des présences
 
-### `npm test`
+L'objectif n'est pas seulement de compter les présences, mais de disposer d'un outil permettant à l'église de **mieux suivre les personnes et de renforcer leur accompagnement.**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🆔 SYSTÈME D'IDENTIFICATION
 
-### `npm run build`
+Chaque personne enregistrée reçoit automatiquement un identifiant unique :
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```text
+BT-0000
+BT-0001
+BT-0002
+BT-0003
+...
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Le numéro commence à **BT-0000**.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Le numéro de téléphone sert uniquement de moyen de contact et **n'est pas utilisé comme identifiant unique**, car plusieurs personnes d'une même famille peuvent utiliser le même numéro.
 
-### `npm run eject`
+Une personne qui revient à un autre culte conserve donc son identifiant.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 📅 SUIVI DES PRÉSENCES
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Les cultes sont organisés chaque samedi.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+BLOOM TEAMS permet de suivre les présences sur les **4 samedis du mois** afin d'obtenir une vision de la participation de chaque personne.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Niveau d'activité
 
-## Learn More
+| Présences | Niveau         |
+| --------- | -------------- |
+| 4/4       | 🟢 SUPER ACTIF |
+| 3/4       | 🔵 ACTIF       |
+| 2/4       | 🟠 À SUIVRE    |
+| 0–1/4     | 🔴 NON ACTIF   |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 📝 INFORMATIONS ENREGISTRÉES
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Lors de l'enregistrement, les informations suivantes peuvent être renseignées :
 
-### Code Splitting
+* Nom
+* Prénom
+* Téléphone
+* Statut
+* Département
+* Date
+* Heure
+* Date d'enregistrement
+* Identifiant unique
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Statuts
 
-### Analyzing the Bundle Size
+* **OUI**
+* **NON**
+* **NOUVEAU**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Départements
 
-### Making a Progressive Web App
+* ACCUEIL
+* LOUANGE
+* COMMUNICATION
+* ADN
+* JEUNESSE
+* AUTRE
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🛠️ TECHNOLOGIES UTILISÉES
 
-### Advanced Configuration
+* **React.js**
+* **JavaScript**
+* **HTML5**
+* **CSS3**
+* **Firebase**
+* **Firestore**
+* **Git**
+* **GitHub**
+* **GitHub Pages**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🗂️ ORGANISATION DES DONNÉES
 
-### Deployment
+Les données sont séparées en deux principales collections Firebase :
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+```text
+Firebase
+│
+├── personnes
+│   ├── BT-0000
+│   ├── BT-0001
+│   ├── BT-0002
+│   └── ...
+│
+└── presences
+    ├── présence 1
+    ├── présence 2
+    ├── présence 3
+    └── ...
+```
 
-### `npm run build` fails to minify
+### `personnes`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Contient les informations permanentes de chaque personne et son identifiant unique.
+
+### `presences`
+
+Contient l'historique des présences enregistrées lors des différents cultes.
+
+## 💻 INSTALLATION
+
+Cloner le projet :
+
+```bash
+git clone https://github.com/borelofficiel/Bloom-Teams.git
+```
+
+Installer les dépendances :
+
+```bash
+npm install
+```
+
+Lancer le projet :
+
+```bash
+npm start
+```
+
+## 🔐 ACCÈS ADMINISTRATEUR
+
+L'application possède également une interface d'administration permettant de consulter les données et les statistiques de présence.
+
+Accès local :
+
+```text
+http://localhost:3000/#admin
+```
+
+Accès en ligne :
+
+```text
+https://borelofficiel.github.io/Bloom-Teams/#admin
+```
+
+## 🌐 APPLICATION EN LIGNE
+
+**BLOOM TEAMS :**
+
+[https://borelofficiel.github.io/Bloom-Teams/](https://borelofficiel.github.io/Bloom-Teams/)
+
+## 📁 STRUCTURE DU PROJET
+
+```text
+Bloom-Teams/
+│
+├── public/
+│   └── images/
+│
+├── src/
+│   ├── App.js
+│   ├── App.css
+│   └── ...
+│
+├── package.json
+├── README.md
+└── ...
+```
+
+## ⛪ CONTEXTE DU PROJET
+
+BLOOM TEAMS a été conçu pour accompagner la gestion des présences au sein de **BLOOM AVF — Assemblée Vie Fructueuse**.
+
+Le projet s'inscrit dans une démarche de **digitalisation du suivi des personnes**, avec pour objectif de rendre la gestion des présences plus simple, plus rapide et plus organisée.
+
+L'application pourra évoluer progressivement en fonction des besoins de l'église et intégrer de nouvelles fonctionnalités.
+
+---
+
+**Un outil numérique pour mieux suivre, organiser et accompagner les personnes qui participent à la vie de l'église.**
