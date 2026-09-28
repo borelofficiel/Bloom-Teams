@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore";
 import db from "./firebase";
 import "./Admin.css";
 import Nettoyage from "./Nettoyage";
@@ -72,6 +72,71 @@ function Admin() {
   ===================================================== */
 
   const [exportEnCours, setExportEnCours] = useState(false);
+
+  /* =====================================================
+     MODAL MODIFICATION
+  ===================================================== */
+
+  const [modalOuverte, setModalOuverte] = useState(false);
+  const [personneEnEdition, setPersonneEnEdition] = useState(null);
+  const [formEdition, setFormEdition] = useState({
+    nom: "",
+    prenom: "",
+    telephone: "",
+    statut: "",
+    departement: "",
+  });
+  const [enregistrementEdition, setEnregistrementEdition] = useState(false);
+
+  const DEPARTEMENTS = [
+    "ACCUEIL",
+    "CHANTRE",
+    "GESTION DU CULTE",
+    "MRES",
+    "INTERCESION",
+    "COMMUNICATION",
+    "ADN",
+    "AUTRE",
+  ];
+
+  const ouvrirModification = (personne) => {
+    setPersonneEnEdition(personne);
+    setFormEdition({
+      nom: personne.nom || "",
+      prenom: personne.prenom || "",
+      telephone: personne.telephone || "",
+      statut: personne.statut || "",
+      departement: personne.departement || "",
+    });
+    setModalOuverte(true);
+  };
+
+  const fermerModification = () => {
+    setModalOuverte(false);
+    setPersonneEnEdition(null);
+    setEnregistrementEdition(false);
+  };
+
+  const enregistrerModification = async () => {
+    if (!personneEnEdition) return;
+    setEnregistrementEdition(true);
+    try {
+      await updateDoc(doc(db, "personnes", personneEnEdition.id), {
+        nom: formEdition.nom.trim().toUpperCase(),
+        prenom: formEdition.prenom.trim(),
+        telephone: formEdition.telephone.trim(),
+        statut: formEdition.statut,
+        departement: formEdition.departement,
+      });
+      await recupererDonnees();
+      fermerModification();
+      alert("Modification enregistrée.");
+    } catch (err) {
+      console.error(err);
+      alert("Erreur : " + err.message);
+      setEnregistrementEdition(false);
+    }
+  };
 
   /* =====================================================
      RÉCUPÉRATION
@@ -163,7 +228,7 @@ function Admin() {
      CALCUL DES JOURS
   ===================================================== */
 
-  const maintenant = useMemo(() => new Date(), []);
+  const maintenant = new Date();
 
   const obtenirSamedis = (date) => {
     const a = date.getFullYear();
@@ -213,7 +278,7 @@ function Admin() {
       default:
         return obtenirSamedis(maintenant);
     }
-  }, [modeSuivi, maintenant]);
+  }, [modeSuivi]);
 
   const samedis = obtenirSamedis(maintenant);
   const dimanches = obtenirDimanches(maintenant);
@@ -328,7 +393,7 @@ function Admin() {
         niveau: obtenirNiveauActivite(total),
       };
     });
-  }, [presencesValides, personnesUniques, colonnesSuivi, filtreStat, samedis, dimanches]);
+  }, [presencesValides, personnesUniques, colonnesSuivi, filtreStat]);
 
   /* =====================================================
      TOP 5 GLOBAL
@@ -381,7 +446,7 @@ function Admin() {
   });
 
   /* =====================================================
-     LISTE PERSONNES (onglet Personnes)
+     LISTE PERSONNES
   ===================================================== */
 
   const personnesAffichees = useMemo(() => {
@@ -1112,6 +1177,7 @@ function Admin() {
                         <th>TÉLÉPHONE</th>
                         <th>STATUT</th>
                         <th>DÉPARTEMENT</th>
+                        <th>ACTIONS</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1146,6 +1212,14 @@ function Admin() {
                             </span>
                           </td>
                           <td>{p.departement || "-"}</td>
+                          <td>
+                            <button
+                              className="bouton-modifier"
+                              onClick={() => ouvrirModification(p)}
+                            >
+                              MODIFIER
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1528,6 +1602,127 @@ function Admin() {
         ============================================ */}
         {ongletActif === "nettoyage" && <Nettoyage />}
 
+        {/* ============================================
+            MODAL MODIFICATION
+        ============================================ */}
+        {modalOuverte && personneEnEdition && (
+          <div className="modal-overlay" onClick={fermerModification}>
+            <div
+              className="modal-contenu"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-entete">
+                <div>
+                  <p className="admin-sur-titre">MODIFICATION</p>
+                  <h3>
+                    {personneEnEdition.personneId} — {personneEnEdition.nom}{" "}
+                    {personneEnEdition.prenom}
+                  </h3>
+                </div>
+                <button className="modal-fermer" onClick={fermerModification}>
+                  ×
+                </button>
+              </div>
+
+              <div className="modal-corps">
+                <div className="modal-groupe">
+                  <label>NOM</label>
+                  <input
+                    type="text"
+                    value={formEdition.nom}
+                    onChange={(e) =>
+                      setFormEdition({ ...formEdition, nom: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="modal-groupe">
+                  <label>PRÉNOM</label>
+                  <input
+                    type="text"
+                    value={formEdition.prenom}
+                    onChange={(e) =>
+                      setFormEdition({
+                        ...formEdition,
+                        prenom: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="modal-groupe">
+                  <label>TÉLÉPHONE</label>
+                  <input
+                    type="text"
+                    value={formEdition.telephone}
+                    onChange={(e) =>
+                      setFormEdition({
+                        ...formEdition,
+                        telephone: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="modal-groupe">
+                  <label>STATUT</label>
+                  <select
+                    value={formEdition.statut}
+                    onChange={(e) =>
+                      setFormEdition({
+                        ...formEdition,
+                        statut: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    <option value="Oui">MEMBRE</option>
+                    <option value="Non">NON-MEMBRE</option>
+                    <option value="Nouveau">NOUVEAU</option>
+                  </select>
+                </div>
+
+                <div className="modal-groupe">
+                  <label>DÉPARTEMENT</label>
+                  <select
+                    value={formEdition.departement}
+                    onChange={(e) =>
+                      setFormEdition({
+                        ...formEdition,
+                        departement: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="">—</option>
+                    {DEPARTEMENTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="modal-pied">
+                <button
+                  className="bouton-annuler-modal"
+                  onClick={fermerModification}
+                  disabled={enregistrementEdition}
+                >
+                  ANNULER
+                </button>
+                <button
+                  className="bouton-enregistrer-modal"
+                  onClick={enregistrerModification}
+                  disabled={enregistrementEdition}
+                >
+                  {enregistrementEdition ? "ENREGISTREMENT..." : "ENREGISTRER"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <footer className="admin-footer">
           <span>BLOOM TEAMS</span>
           <span>ADMINISTRATION</span>
@@ -1539,5 +1734,3 @@ function Admin() {
 }
 
 export default Admin;
-
-

@@ -3760,3 +3760,233 @@ select {
     max-width: 500px;
   }
 }
+
+/* ============================================
+   BOUTON MODIFIER
+============================================ */
+
+.bouton-modifier {
+  padding: 6px 12px;
+  background: #0a3663;
+  color: #fff;
+  border: 2px solid #050505;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.bouton-modifier:hover {
+  background: #ff007f;
+  border-color: #050505;
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 #050505;
+}
+
+/* ============================================
+   MODAL MODIFICATION
+============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-contenu {
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fff;
+  border: 2px solid #050505;
+  box-shadow: 8px 8px 0 #050505;
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-entete {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 2px solid #050505;
+  background: #fafafa;
+}
+
+.modal-entete h3 {
+  font-size: 15px;
+  font-weight: 1000;
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+  color: #050505;
+}
+
+.modal-fermer {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #050505;
+  background: #fff;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+
+.modal-fermer:hover {
+  background: #ff007f;
+  color: #fff;
+}
+
+.modal-corps {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.modal-groupe {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-groupe label {
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 1.5px;
+  color: #666;
+}
+
+.modal-groupe input,
+.modal-groupe select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: #fff;
+  border: 2px solid #d0d0d0;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.modal-groupe input:focus,
+.modal-groupe select:focus {
+  border-color: #ff007f;
+  box-shadow: 3px 3px 0 #76ee59;
+}
+
+.modal-pied {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 2px solid #050505;
+  background: #fafafa;
+}
+
+.bouton-annuler-modal,
+.bouton-enregistrer-modal {
+  padding: 12px 20px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 2px solid #050505;
+}
+
+.bouton-annuler-modal {
+  background: #fff;
+  color: #666;
+}
+
+.bouton-annuler-modal:hover:not(:disabled) {
+  background: #f4f4f4;
+  color: #050505;
+}
+
+.bouton-enregistrer-modal {
+  background: #76ee59;
+  color: #050505;
+}
+
+.bouton-enregistrer-modal:hover:not(:disabled) {
+  background: #050505;
+  color: #76ee59;
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #76ee59;
+}
+
+.bouton-annuler-modal:disabled,
+.bouton-enregistrer-modal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 649px) {
+  .modal-contenu {
+    box-shadow: 4px 4px 0 #050505;
+  }
+
+  .modal-entete {
+    padding: 16px 18px;
+  }
+
+  .modal-entete h3 {
+    font-size: 13px;
+  }
+
+  .modal-corps {
+    padding: 18px;
+    gap: 12px;
+  }
+
+  .modal-pied {
+    padding: 14px 18px;
+    flex-direction: column;
+  }
+
+  .bouton-annuler-modal,
+  .bouton-enregistrer-modal {
+    width: 100%;
+  }
+}
