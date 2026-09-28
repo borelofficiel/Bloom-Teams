@@ -163,7 +163,7 @@ function Admin() {
      CALCUL DES JOURS
   ===================================================== */
 
-  const maintenant = new Date();
+  const maintenant = useMemo(() => new Date(), []);
 
   const obtenirSamedis = (date) => {
     const a = date.getFullYear();
@@ -213,7 +213,7 @@ function Admin() {
       default:
         return obtenirSamedis(maintenant);
     }
-  }, [modeSuivi]);
+  }, [modeSuivi, maintenant]);
 
   const samedis = obtenirSamedis(maintenant);
   const dimanches = obtenirDimanches(maintenant);
@@ -328,7 +328,7 @@ function Admin() {
         niveau: obtenirNiveauActivite(total),
       };
     });
-  }, [presencesValides, personnesUniques, colonnesSuivi, filtreStat]);
+  }, [presencesValides, personnesUniques, colonnesSuivi, filtreStat, samedis, dimanches]);
 
   /* =====================================================
      TOP 5 GLOBAL
@@ -1539,3 +1539,5 @@ function Admin() {
 }
 
 export default Admin;
+
+
