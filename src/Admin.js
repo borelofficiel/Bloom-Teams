@@ -1,15 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-} from "firebase/firestore";
-
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import db from "./firebase";
 import "./Admin.css";
+import Nettoyage from "./Nettoyage";
 
-// Import des librairies pour les graphiques et Excel
 import {
   BarChart,
   Bar,
@@ -17,13 +11,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   AreaChart,
   Area,
 } from "recharts";
@@ -46,7 +37,7 @@ function Admin() {
       setEstConnecte(true);
       setErreurConnexion("");
     } else {
-      setErreurConnexion("❌ Identifiants incorrects. Veuillez réessayer.");
+      setErreurConnexion("Identifiants incorrects.");
       setMotDePasse("");
     }
   };
@@ -58,7 +49,7 @@ function Admin() {
   const [ongletActif, setOngletActif] = useState("dashboard");
 
   /* =====================================================
-     DONNÉES FIREBASE
+     DONNÉES
   ===================================================== */
 
   const [presences, setPresences] = useState([]);
@@ -72,436 +63,587 @@ function Admin() {
 
   const [recherche, setRecherche] = useState("");
   const [filtreStatut, setFiltreStatut] = useState("TOUS");
+  const [filtreDepartement, setFiltreDepartement] = useState("TOUS");
+  const [modeSuivi, setModeSuivi] = useState("samedis");
+  const [filtreStat, setFiltreStat] = useState("samedis");
 
   /* =====================================================
-     EXPORT EXCEL
+     EXPORT
   ===================================================== */
 
   const [exportEnCours, setExportEnCours] = useState(false);
 
   /* =====================================================
-     RÉCUPÉRATION DES DONNÉES
+     RÉCUPÉRATION
   ===================================================== */
 
   const recupererDonnees = async () => {
     setChargement(true);
     setErreur("");
-
     try {
-      const personnesRef = collection(db, "personnes");
-      const personnesSnapshot = await getDocs(personnesRef);
-      const personnesData = personnesSnapshot.docs
-        .filter((doc) => doc.id !== "_counter")
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+      const personnesSnap = await getDocs(collection(db, "personnes"));
+      const personnesData = personnesSnap.docs
+        .filter((d) => d.id !== "_counter")
+        .map((d) => ({ id: d.id, ...d.data() }));
       setPersonnes(personnesData);
 
       const presencesRef = collection(db, "presences");
-      const requete = query(presencesRef, orderBy("dateEnregistrement", "desc"));
-      const resultat = await getDocs(requete);
-      const donnees = resultat.docs.map((document) => ({
-        id: document.id,
-        ...document.data(),
-      }));
+      const req = query(presencesRef, orderBy("dateEnregistrement", "desc"));
+      const resultat = await getDocs(req);
+      const donnees = resultat.docs.map((d) => ({ id: d.id, ...d.data() }));
       setPresences(donnees);
-
-      console.log("✅ Personnes récupérées :", personnesData.length);
-      console.log("✅ Présences récupérées :", donnees.length);
-    } catch (erreurFirebase) {
-      console.error("Erreur lors de la récupération :", erreurFirebase);
-      setErreur("Impossible de récupérer les données depuis Firebase.");
+    } catch (err) {
+      console.error("Erreur récupération:", err);
+      setErreur("Impossible de récupérer les données.");
     } finally {
       setChargement(false);
     }
   };
 
-  /* =====================================================
-     CHARGEMENT INITIAL
-  ===================================================== */
-
   useEffect(() => {
-    if (estConnecte) {
-      recupererDonnees();
-    }
+    if (estConnecte) recupererDonnees();
   }, [estConnecte]);
 
   /* =====================================================
-     STATISTIQUES GÉNÉRALES
+     DÉDOUBLONNAGE
   ===================================================== */
 
-  const totalPresences = presences.length;
-  const totalPersonnes = personnes.length;
-
-  const totalMembres = personnes.filter(
-    (personne) => personne.statut === "Oui"
-  ).length;
-
-  const totalNonMembres = personnes.filter(
-    (personne) => personne.statut === "Non"
-  ).length;
-
-  const totalNouveaux = personnes.filter(
-    (personne) => personne.statut === "Nouveau"
-  ).length;
-
-  /* =====================================================
-     DÉPARTEMENTS
-  ===================================================== */
-
-  const statsDepartements = useMemo(() => {
-    const deptMap = {};
-    personnes.forEach((personne) => {
-      const dept = personne.departement || "Non défini";
-      deptMap[dept] = (deptMap[dept] || 0) + 1;
+  const personnesUniques = useMemo(() => {
+    const map = {};
+    personnes.forEach((p) => {
+      if (!p.personneId || p.personneId === "BT-TESTA-9999") return;
+      if (!map[p.personneId]) map[p.personneId] = p;
     });
-    return Object.entries(deptMap)
-      .map(([nom, valeur]) => ({ nom, valeur }))
-      .sort((a, b) => b.valeur - a.valeur);
+    return Object.values(map);
   }, [personnes]);
 
-  /* =====================================================
-     STATUTS
-  ===================================================== */
-
-  const statsStatuts = useMemo(() => {
-    return [
-      { nom: "Membres", valeur: totalMembres },
-      { nom: "Non-Membres", valeur: totalNonMembres },
-      { nom: "Nouveaux", valeur: totalNouveaux },
-    ].filter((item) => item.valeur > 0);
-  }, [totalMembres, totalNonMembres, totalNouveaux]);
-
-  /* =====================================================
-     DONNÉES POUR LE GRAPHIQUE D'ÉVOLUTION
-  ===================================================== */
-
-  const donneesEvolution = useMemo(() => {
-    const semaineMap = {};
-    presences.forEach((presence) => {
-      if (!presence.dateEnregistrement) return;
-      
-      let date;
-      try {
-        if (typeof presence.dateEnregistrement.toDate === "function") {
-          date = presence.dateEnregistrement.toDate();
-        } else {
-          date = new Date(presence.dateEnregistrement);
-        }
-      } catch {
-        return;
-      }
-
-      if (isNaN(date.getTime())) return;
-
-      const jour = date.getDay();
-      const diff = date.getDate() - jour + (jour === 0 ? -6 : 1);
-      const debutSemaine = new Date(date);
-      debutSemaine.setDate(diff);
-      debutSemaine.setHours(0, 0, 0, 0);
-
-      const cle = debutSemaine.toISOString().split("T")[0];
-      const libelle = `Sem. ${debutSemaine.toLocaleDateString("fr-FR", {
-        day: "2-digit",
-        month: "short",
-      })}`;
-
-      if (!semaineMap[cle]) {
-        semaineMap[cle] = { date: cle, libelle, total: 0 };
-      }
-      semaineMap[cle].total++;
-    });
-
-    return Object.values(semaineMap).sort((a, b) => a.date.localeCompare(b.date));
+  const presencesValides = useMemo(() => {
+    return presences.filter(
+      (p) => p.personneId && p.personneId !== "BT-TESTA-9999"
+    );
   }, [presences]);
 
   /* =====================================================
-     RECHERCHE + FILTRE (PRÉSENCES)
+     STATS GÉNÉRALES
   ===================================================== */
 
-  const presencesFiltrees = presences.filter((presence) => {
-    const texteRecherche = recherche.toLowerCase().trim();
+  const totalPresences = presencesValides.length;
+  const totalPersonnes = personnesUniques.length;
 
-    const nomComplet = `${presence.nom || ""} ${presence.prenom || ""}`.toLowerCase();
-    const telephone = presence.telephone || "";
-    const personneId = presence.personneId || "";
-
-    const correspondRecherche =
-      nomComplet.includes(texteRecherche) ||
-      telephone.includes(texteRecherche) ||
-      personneId.toLowerCase().includes(texteRecherche);
-
-    const correspondStatut =
-      filtreStatut === "TOUS" || presence.statut === filtreStatut;
-
-    return correspondRecherche && correspondStatut;
-  });
+  const totalMembres = personnesUniques.filter((p) => p.statut === "Oui").length;
+  const totalNonMembres = personnesUniques.filter((p) => p.statut === "Non").length;
+  const totalNouveaux = personnesUniques.filter((p) => p.statut === "Nouveau").length;
 
   /* =====================================================
-     DÉTERMINER LES 4 SAMEDIS DU MOIS
+     STATS DÉPARTEMENTS
   ===================================================== */
 
-  const obtenirSamedisDuMois = (date) => {
-    const annee = date.getFullYear();
-    const mois = date.getMonth();
-
-    const samedis = [];
-    const dernierJour = new Date(annee, mois + 1, 0);
-
-    for (let jour = 1; jour <= dernierJour.getDate(); jour++) {
-      const dateJour = new Date(annee, mois, jour);
-      if (dateJour.getDay() === 6) {
-        samedis.push(dateJour);
-      }
-    }
-
-    return samedis.slice(0, 4);
-  };
-
-  /* =====================================================
-     FORMATAGE DATE
-  ===================================================== */
-
-  const formaterDate = (date) => {
-    return date.toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
+  const statsDepartements = useMemo(() => {
+    const map = {};
+    personnesUniques.forEach((p) => {
+      const d = p.departement || "Non défini";
+      map[d] = (map[d] || 0) + 1;
     });
-  };
+    return Object.entries(map)
+      .map(([nom, valeur]) => ({ nom, valeur }))
+      .sort((a, b) => b.valeur - a.valeur);
+  }, [personnesUniques]);
+
+  const statsStatuts = useMemo(
+    () =>
+      [
+        { nom: "Membres", valeur: totalMembres },
+        { nom: "Non-Membres", valeur: totalNonMembres },
+        { nom: "Nouveaux", valeur: totalNouveaux },
+      ].filter((i) => i.valeur > 0),
+    [totalMembres, totalNonMembres, totalNouveaux]
+  );
 
   /* =====================================================
-     VÉRIFIER SI UNE PRÉSENCE CORRESPOND À UN SAMEDI
+     CALCUL DES JOURS
   ===================================================== */
 
-  const presenceCorrespondAuSamedi = (presence, samedi) => {
-    if (!presence.dateEnregistrement) {
-      return false;
+  const maintenant = new Date();
+
+  const obtenirSamedis = (date) => {
+    const a = date.getFullYear();
+    const m = date.getMonth();
+    const res = [];
+    const dLast = new Date(a, m + 1, 0);
+    for (let j = 1; j <= dLast.getDate(); j++) {
+      const d = new Date(a, m, j);
+      if (d.getDay() === 6) res.push(d);
     }
+    return res.slice(0, 4);
+  };
 
-    let datePresence;
+  const obtenirDimanches = (date) => {
+    const a = date.getFullYear();
+    const m = date.getMonth();
+    const res = [];
+    const dLast = new Date(a, m + 1, 0);
+    for (let j = 1; j <= dLast.getDate(); j++) {
+      const d = new Date(a, m, j);
+      if (d.getDay() === 0) res.push(d);
+    }
+    return res.slice(0, 4);
+  };
 
+  const obtenirTousLesJours = (date) => {
+    const a = date.getFullYear();
+    const m = date.getMonth();
+    const res = [];
+    const dLast = new Date(a, m + 1, 0);
+    for (let j = 1; j <= dLast.getDate(); j++) {
+      res.push(new Date(a, m, j));
+    }
+    return res;
+  };
+
+  const obtenirAujourdHui = () => [new Date()];
+
+  const colonnesSuivi = useMemo(() => {
+    switch (modeSuivi) {
+      case "dimanches":
+        return obtenirDimanches(maintenant);
+      case "tous":
+        return obtenirTousLesJours(maintenant);
+      case "aujourdhui":
+        return obtenirAujourdHui();
+      default:
+        return obtenirSamedis(maintenant);
+    }
+  }, [modeSuivi]);
+
+  const samedis = obtenirSamedis(maintenant);
+  const dimanches = obtenirDimanches(maintenant);
+
+  /* =====================================================
+     FORMAT DATE
+  ===================================================== */
+
+  const formaterDate = (d) =>
+    d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" });
+
+  const libelleColonne = (d, index) => {
+    switch (modeSuivi) {
+      case "dimanches":
+        return { titre: `DIM. ${index + 1}`, sous: formaterDate(d) };
+      case "tous":
+        return {
+          titre: d
+            .toLocaleDateString("fr-FR", { weekday: "short" })
+            .toUpperCase(),
+          sous: formaterDate(d),
+        };
+      case "aujourdhui":
+        return { titre: "AUJOURD'HUI", sous: formaterDate(d) };
+      default:
+        return { titre: `SAM. ${index + 1}`, sous: formaterDate(d) };
+    }
+  };
+
+  const dateMatch = (presence, colonne) => {
+    if (!presence.dateEnregistrement) return false;
+    let dp;
     try {
-      if (typeof presence.dateEnregistrement.toDate === "function") {
-        datePresence = presence.dateEnregistrement.toDate();
-      } else {
-        datePresence = new Date(presence.dateEnregistrement);
-      }
+      dp =
+        typeof presence.dateEnregistrement.toDate === "function"
+          ? presence.dateEnregistrement.toDate()
+          : new Date(presence.dateEnregistrement);
     } catch {
       return false;
     }
-
-    if (Number.isNaN(datePresence.getTime())) {
-      return false;
-    }
-
+    if (isNaN(dp.getTime())) return false;
     return (
-      datePresence.getFullYear() === samedi.getFullYear() &&
-      datePresence.getMonth() === samedi.getMonth() &&
-      datePresence.getDate() === samedi.getDate()
+      dp.getFullYear() === colonne.getFullYear() &&
+      dp.getMonth() === colonne.getMonth() &&
+      dp.getDate() === colonne.getDate()
     );
   };
 
   /* =====================================================
-     CALCUL DU NIVEAU D'ACTIVITÉ
+     NIVEAU
   ===================================================== */
 
   const obtenirNiveauActivite = (total) => {
-    if (total === 4) {
-      return { nom: "SUPER ACTIF", classe: "super-actif" };
-    }
-    if (total === 3) {
-      return { nom: "ACTIF", classe: "actif" };
-    }
-    if (total === 2) {
-      return { nom: "À SUIVRE", classe: "a-suivre" };
-    }
+    if (total === 4) return { nom: "SUPER ACTIF", classe: "super-actif" };
+    if (total === 3) return { nom: "ACTIF", classe: "actif" };
+    if (total === 2) return { nom: "A SUIVRE", classe: "a-suivre" };
     return { nom: "NON ACTIF", classe: "non-actif" };
   };
 
   /* =====================================================
-     CONSTRUCTION DU SUIVI MENSUEL
+     SUIVI MENSUEL
   ===================================================== */
 
   const suiviActivite = useMemo(() => {
-    const maintenant = new Date();
-    const samedis = obtenirSamedisDuMois(maintenant);
+    const map = {};
 
-    const personnesMap = {};
-
-    personnes.forEach((personne) => {
-      const personneId = personne.personneId;
-      if (!personneId) return;
-
-      personnesMap[personneId] = {
-        personneId: personneId,
-        nom: personne.nom || "",
-        prenom: personne.prenom || "",
-        telephone: personne.telephone || "",
-        statut: personne.statut || "",
-        departement: personne.departement || "",
+    personnesUniques.forEach((p) => {
+      if (!p.personneId) return;
+      map[p.personneId] = {
+        personneId: p.personneId,
+        nom: p.nom || "",
+        prenom: p.prenom || "",
+        telephone: p.telephone || "",
+        statut: p.statut || "",
+        departement: p.departement || "",
+        colonnes: colonnesSuivi.map(() => false),
         samedis: samedis.map(() => false),
+        dimanches: dimanches.map(() => false),
       };
     });
 
-    presences.forEach((presence) => {
-      const personneId = presence.personneId;
-      if (!personneId || !personnesMap[personneId]) return;
+    presencesValides.forEach((p) => {
+      if (!p.personneId || !map[p.personneId]) return;
 
-      samedis.forEach((samedi, index) => {
-        if (presenceCorrespondAuSamedi(presence, samedi)) {
-          personnesMap[personneId].samedis[index] = true;
-        }
+      colonnesSuivi.forEach((col, i) => {
+        if (dateMatch(p, col)) map[p.personneId].colonnes[i] = true;
+      });
+
+      samedis.forEach((s, i) => {
+        if (dateMatch(p, s)) map[p.personneId].samedis[i] = true;
+      });
+
+      dimanches.forEach((d, i) => {
+        if (dateMatch(p, d)) map[p.personneId].dimanches[i] = true;
       });
     });
 
-    return Object.values(personnesMap).map((personne) => {
-      const total = personne.samedis.filter(Boolean).length;
+    return Object.values(map).map((p) => {
+      const totalSam = p.samedis.filter(Boolean).length;
+      const totalDim = p.dimanches.filter(Boolean).length;
+      const total =
+        filtreStat === "dimanches"
+          ? totalDim
+          : filtreStat === "samedis"
+          ? totalSam
+          : totalSam + totalDim;
       return {
-        ...personne,
+        ...p,
         total,
+        totalSam,
+        totalDim,
         niveau: obtenirNiveauActivite(total),
       };
     });
-  }, [presences, personnes]);
+  }, [presencesValides, personnesUniques, colonnesSuivi, filtreStat]);
 
   /* =====================================================
-     RECHERCHE DANS LE SUIVI D'ACTIVITÉ
+     TOP 5 GLOBAL
   ===================================================== */
 
-  const suiviActiviteFiltre = suiviActivite.filter((personne) => {
-    const texteRecherche = recherche.toLowerCase().trim();
+  const championGlobal = useMemo(() => {
+    return [...suiviActivite].sort((a, b) => b.total - a.total).slice(0, 5);
+  }, [suiviActivite]);
 
-    const nomComplet = `${personne.nom} ${personne.prenom}`.toLowerCase();
-    const telephone = personne.telephone;
-    const personneId = personne.personneId.toLowerCase();
+  /* =====================================================
+     CLASSEMENT PAR DÉPARTEMENT
+  ===================================================== */
 
-    return (
-      nomComplet.includes(texteRecherche) ||
-      telephone.includes(texteRecherche) ||
-      personneId.includes(texteRecherche)
-    );
+  const classementDepartements = useMemo(() => {
+    const map = {};
+    suiviActivite.forEach((p) => {
+      const d = p.departement || "Non défini";
+      if (!map[d]) map[d] = [];
+      map[d].push(p);
+    });
+
+    return Object.entries(map)
+      .map(([departement, personnes]) => {
+        const tri = [...personnes].sort((a, b) => b.total - a.total);
+        const totalPresences = personnes.reduce((s, p) => s + p.total, 0);
+        return {
+          departement,
+          nombre: personnes.length,
+          totalPresences,
+          top3: tri.slice(0, 3),
+        };
+      })
+      .sort((a, b) => b.totalPresences - a.totalPresences);
+  }, [suiviActivite]);
+
+  /* =====================================================
+     FILTRES SUIVI
+  ===================================================== */
+
+  const suiviFiltre = suiviActivite.filter((p) => {
+    const t = recherche.toLowerCase().trim();
+    const nom = `${p.nom} ${p.prenom}`.toLowerCase();
+    const tel = (p.telephone || "").toLowerCase();
+    const id = p.personneId.toLowerCase();
+    const matchRech = !t || nom.includes(t) || tel.includes(t) || id.includes(t);
+    const matchStatut = filtreStatut === "TOUS" || p.statut === filtreStatut;
+    const matchDept =
+      filtreDepartement === "TOUS" || p.departement === filtreDepartement;
+    return matchRech && matchStatut && matchDept;
   });
 
   /* =====================================================
-     STATISTIQUES ACTIVITÉ
+     LISTE PERSONNES (onglet Personnes)
   ===================================================== */
 
-  const totalSuperActifs = suiviActivite.filter((personne) => personne.total === 4).length;
-  const totalActifs = suiviActivite.filter((personne) => personne.total === 3).length;
-  const totalASuivre = suiviActivite.filter((personne) => personne.total === 2).length;
-  const totalNonActifs = suiviActivite.filter((personne) => personne.total <= 1).length;
+  const personnesAffichees = useMemo(() => {
+    return personnesUniques
+      .filter((p) => {
+        const t = recherche.toLowerCase().trim();
+        const nom = `${p.nom || ""} ${p.prenom || ""}`.toLowerCase();
+        const tel = (p.telephone || "").toLowerCase();
+        const id = (p.personneId || "").toLowerCase();
+        const matchRech =
+          !t || nom.includes(t) || tel.includes(t) || id.includes(t);
+        const matchStatut = filtreStatut === "TOUS" || p.statut === filtreStatut;
+        const matchDept =
+          filtreDepartement === "TOUS" || p.departement === filtreDepartement;
+        return matchRech && matchStatut && matchDept;
+      })
+      .sort((a, b) => {
+        const na = parseInt((a.personneId || "").replace(/\D/g, "")) || 0;
+        const nb = parseInt((b.personneId || "").replace(/\D/g, "")) || 0;
+        return na - nb;
+      });
+  }, [personnesUniques, recherche, filtreStatut, filtreDepartement]);
 
   /* =====================================================
-     DONNÉES POUR LE GRAPHIQUE D'ACTIVITÉ
+     STATS ACTIVITÉ
   ===================================================== */
 
-  const donneesActivite = useMemo(() => {
-    return [
-      { nom: "SUPER ACTIF", valeur: totalSuperActifs, couleur: "#111111" },
-      { nom: "ACTIF", valeur: totalActifs, couleur: "#555555" },
-      { nom: "À SUIVRE", valeur: totalASuivre, couleur: "#999999" },
-      { nom: "NON ACTIF", valeur: totalNonActifs, couleur: "#d5d5d5" },
-    ].filter((item) => item.valeur > 0);
-  }, [totalSuperActifs, totalActifs, totalASuivre, totalNonActifs]);
+  const totalSuperActifs = suiviActivite.filter((p) => p.total === 4).length;
+  const totalActifs = suiviActivite.filter((p) => p.total === 3).length;
+  const totalASuivre = suiviActivite.filter((p) => p.total === 2).length;
+  const totalNonActifs = suiviActivite.filter((p) => p.total <= 1).length;
+
+  const donneesActivite = useMemo(
+    () =>
+      [
+        { nom: "SUPER ACTIF", valeur: totalSuperActifs, couleur: "#111111" },
+        { nom: "ACTIF", valeur: totalActifs, couleur: "#555555" },
+        { nom: "A SUIVRE", valeur: totalASuivre, couleur: "#999999" },
+        { nom: "NON ACTIF", valeur: totalNonActifs, couleur: "#d5d5d5" },
+      ].filter((i) => i.valeur > 0),
+    [totalSuperActifs, totalActifs, totalASuivre, totalNonActifs]
+  );
 
   /* =====================================================
-     COULEURS POUR LES GRAPHIQUES
+     ÉVOLUTION
   ===================================================== */
 
-  const COULEURS = ["#ff007f", "#76ee59", "#40d0e0", "#0a3663", "#ff6b6b", "#feca57", "#48dbfb"];
-
-  /* =====================================================
-     EXPORT EXCEL - PAR SAMEDI
-  ===================================================== */
-
-  const exporterExcel = (samediIndex) => {
-    setExportEnCours(true);
-
-    try {
-      const maintenant = new Date();
-      const samedis = obtenirSamedisDuMois(maintenant);
-      
-      if (samediIndex >= samedis.length) {
-        alert("Ce samedi n'existe pas dans le mois en cours.");
-        setExportEnCours(false);
+  const donneesEvolution = useMemo(() => {
+    const map = {};
+    presencesValides.forEach((p) => {
+      if (!p.dateEnregistrement) return;
+      let d;
+      try {
+        d =
+          typeof p.dateEnregistrement.toDate === "function"
+            ? p.dateEnregistrement.toDate()
+            : new Date(p.dateEnregistrement);
+      } catch {
         return;
       }
+      if (isNaN(d.getTime())) return;
+      const jour = d.getDay();
+      const diff = d.getDate() - jour + (jour === 0 ? -6 : 1);
+      const debut = new Date(d);
+      debut.setDate(diff);
+      debut.setHours(0, 0, 0, 0);
+      const cle = debut.toISOString().split("T")[0];
+      const lib = `Sem. ${debut.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+      })}`;
+      if (!map[cle]) map[cle] = { date: cle, libelle: lib, total: 0 };
+      map[cle].total++;
+    });
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+  }, [presencesValides]);
 
-      const samedi = samedis[samediIndex];
-      const dateSamedi = samedi.toLocaleDateString("fr-FR", {
+  /* =====================================================
+     EXPORTS
+  ===================================================== */
+
+  const exporterListe = (donnees, nomFichier, feuille) => {
+    if (!donnees || donnees.length === 0) {
+      alert("Aucune donnée à exporter.");
+      return;
+    }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(donnees);
+    ws["!cols"] = Object.keys(donnees[0]).map(() => ({ wch: 18 }));
+    XLSX.utils.book_append_sheet(wb, ws, feuille || "Export");
+    XLSX.writeFile(wb, nomFichier);
+  };
+
+  const exporterListePersonnes = () => {
+    setExportEnCours(true);
+    try {
+      const donnees = personnesAffichees.map((p, i) => ({
+        "#": i + 1,
+        ID: p.personneId,
+        Nom: p.nom,
+        Prenom: p.prenom,
+        Telephone: p.telephone || "",
+        Statut:
+          p.statut === "Oui"
+            ? "MEMBRE"
+            : p.statut === "Nouveau"
+            ? "NOUVEAU"
+            : p.statut === "Non"
+            ? "NON-MEMBRE"
+            : "",
+        Departement: p.departement || "",
+      }));
+      exporterListe(donnees, `BLOOM_PERSONNES.xlsx`, "Personnes");
+    } finally {
+      setExportEnCours(false);
+    }
+  };
+
+  const exporterParSamedi = (index) => {
+    setExportEnCours(true);
+    try {
+      const samedi = samedis[index];
+      if (!samedi) return alert("Samedi introuvable.");
+      const dateStr = samedi.toLocaleDateString("fr-FR", {
         day: "2-digit",
         month: "long",
         year: "numeric",
       });
-
-      const presentes = suiviActivite.filter((personne) => {
-        return personne.samedis[samediIndex] === true;
-      });
-
-      if (presentes.length === 0) {
-        alert(`Aucune présence enregistrée pour le samedi ${dateSamedi}`);
-        setExportEnCours(false);
-        return;
-      }
-
-      const donneesExcel = presentes.map((personne, index) => ({
-        "#": index + 1,
-        "ID": personne.personneId,
-        "Nom": personne.nom,
-        "Prénom": personne.prenom,
-        "Téléphone": personne.telephone,
-        "Statut": personne.statut || "-",
-        "Département": personne.departement || "-",
-        "Samedi": dateSamedi,
-        "Présence": "✅ Présent",
+      const presents = suiviActivite.filter((p) => p.samedis[index]);
+      const donnees = presents.map((p, i) => ({
+        "#": i + 1,
+        ID: p.personneId,
+        Nom: p.nom,
+        Prenom: p.prenom,
+        Telephone: p.telephone,
+        Statut: p.statut || "-",
+        Departement: p.departement || "-",
+        Date: dateStr,
       }));
+      exporterListe(
+        donnees,
+        `BLOOM_Samedi_${index + 1}.xlsx`,
+        `Samedi ${index + 1}`
+      );
+    } finally {
+      setExportEnCours(false);
+    }
+  };
 
-      const resume = {
-        "#": "",
-        "ID": "",
-        "Nom": "",
-        "Prénom": "",
-        "Téléphone": "",
-        "Statut": "",
-        "Département": "",
-        "Samedi": "TOTAL",
-        "Présence": `${presentes.length} personnes`,
-      };
-
-      donneesExcel.push(resume);
-
+  const exporterTousSamedis = () => {
+    setExportEnCours(true);
+    try {
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(donneesExcel);
+      samedis.forEach((s, i) => {
+        const dateStr = s.toLocaleDateString("fr-FR", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        });
+        const presents = suiviActivite.filter((p) => p.samedis[i]);
+        const donnees = presents.map((p, idx) => ({
+          "#": idx + 1,
+          ID: p.personneId,
+          Nom: p.nom,
+          Prenom: p.prenom,
+          Telephone: p.telephone,
+          Statut: p.statut || "-",
+          Departement: p.departement || "-",
+          Date: dateStr,
+        }));
+        const ws = XLSX.utils.json_to_sheet(
+          donnees.length ? donnees : [{ Info: "Aucune presence" }]
+        );
+        ws["!cols"] = Array(7).fill({ wch: 18 });
+        XLSX.utils.book_append_sheet(wb, ws, `Samedi ${i + 1}`);
+      });
+      XLSX.writeFile(wb, `BLOOM_TOUS_SAMEDIS.xlsx`);
+    } finally {
+      setExportEnCours(false);
+    }
+  };
 
-      ws["!cols"] = [
-        { wch: 5 },
-        { wch: 12 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 15 },
-        { wch: 20 },
-        { wch: 25 },
-        { wch: 15 },
-      ];
+  const exporterSuiviComplet = () => {
+    setExportEnCours(true);
+    try {
+      const donnees = suiviFiltre.map((p, i) => {
+        const ligne = {
+          "#": i + 1,
+          ID: p.personneId,
+          Nom: p.nom,
+          Prenom: p.prenom,
+          Telephone: p.telephone,
+          Statut: p.statut || "-",
+          Departement: p.departement || "-",
+        };
+        colonnesSuivi.forEach((c, idx) => {
+          ligne[`Col ${idx + 1} (${formaterDate(c)})`] = p.colonnes[idx]
+            ? "Present"
+            : "-";
+        });
+        ligne["Total Samedis"] = p.totalSam;
+        ligne["Total Dimanches"] = p.totalDim;
+        ligne["TOTAL"] = p.total;
+        ligne["Niveau"] = p.niveau.nom;
+        return ligne;
+      });
+      exporterListe(donnees, `BLOOM_SUIVI.xlsx`, "Suivi");
+    } finally {
+      setExportEnCours(false);
+    }
+  };
 
-      XLSX.utils.book_append_sheet(wb, ws, "Présences");
-      
-      const nomFichier = `BLOOM_Presences_Samedi_${samediIndex + 1}_${dateSamedi.replace(/\s/g, "_")}.xlsx`;
-      XLSX.writeFile(wb, nomFichier);
+  const exporterParDepartement = () => {
+    setExportEnCours(true);
+    try {
+      const wb = XLSX.utils.book_new();
+      classementDepartements.forEach((d) => {
+        const donnees = d.top3.map((p, i) => ({
+          "#": i + 1,
+          ID: p.personneId,
+          Nom: p.nom,
+          Prenom: p.prenom,
+          Telephone: p.telephone,
+          "Total Samedis": p.totalSam,
+          "Total Dimanches": p.totalDim,
+          TOTAL: p.total,
+          Niveau: p.niveau.nom,
+        }));
+        const ws = XLSX.utils.json_to_sheet(
+          donnees.length ? donnees : [{ Info: "Aucune donnee" }]
+        );
+        ws["!cols"] = Array(8).fill({ wch: 18 });
+        XLSX.utils.book_append_sheet(wb, ws, d.departement.substring(0, 28));
+      });
+      XLSX.writeFile(wb, `BLOOM_PAR_DEPARTEMENT.xlsx`);
+    } finally {
+      setExportEnCours(false);
+    }
+  };
 
-      alert(`✅ Export Excel réussi !\n📊 ${presentes.length} personnes présentes le ${dateSamedi}`);
-    } catch (error) {
-      console.error("Erreur lors de l'export Excel :", error);
-      alert("❌ Erreur lors de l'export Excel. Vérifie la console.");
+  const exporterTopActifs = () => {
+    setExportEnCours(true);
+    try {
+      const donnees = championGlobal.map((p, i) => ({
+        Rang: i + 1,
+        ID: p.personneId,
+        Nom: p.nom,
+        Prenom: p.prenom,
+        Departement: p.departement || "-",
+        "Total Samedis": p.totalSam,
+        "Total Dimanches": p.totalDim,
+        TOTAL: p.total,
+        Niveau: p.niveau.nom,
+      }));
+      exporterListe(donnees, `BLOOM_TOP_ACTIFS.xlsx`, "Top");
     } finally {
       setExportEnCours(false);
     }
   };
 
   /* =====================================================
-     MOIS ACTUEL
+     MOIS
   ===================================================== */
 
   const moisActuel = new Date().toLocaleDateString("fr-FR", {
@@ -509,10 +651,8 @@ function Admin() {
     year: "numeric",
   });
 
-  const samedis = obtenirSamedisDuMois(new Date());
-
   /* =====================================================
-     PAGE DE CONNEXION
+     CONNEXION
   ===================================================== */
 
   if (!estConnecte) {
@@ -525,43 +665,35 @@ function Admin() {
               <small>TEAMS ADMIN</small>
             </div>
             <h2>CONNEXION</h2>
-            <p className="connexion-sous-titre">Veuillez vous identifier pour accéder à l'administration</p>
-            
+            <p className="connexion-sous-titre">
+              Veuillez vous identifier pour continuer
+            </p>
             <form onSubmit={handleConnexion} className="connexion-form">
               <div className="connexion-groupe">
                 <label>NOM D'UTILISATEUR</label>
                 <input
                   type="text"
-                  placeholder="Entrez votre nom"
                   value={nomUtilisateur}
                   onChange={(e) => setNomUtilisateur(e.target.value)}
                   required
                 />
               </div>
-
               <div className="connexion-groupe">
                 <label>MOT DE PASSE</label>
                 <input
                   type="password"
-                  placeholder="Entrez votre mot de passe"
                   value={motDePasse}
                   onChange={(e) => setMotDePasse(e.target.value)}
                   required
                 />
               </div>
-
               {erreurConnexion && (
                 <div className="connexion-erreur">{erreurConnexion}</div>
               )}
-
               <button type="submit" className="connexion-bouton">
-                SE CONNECTER →
+                SE CONNECTER
               </button>
             </form>
-
-            <div className="connexion-pied">
-              <span>Accès sécurisé</span>
-            </div>
           </div>
         </div>
       </div>
@@ -569,48 +701,63 @@ function Admin() {
   }
 
   /* =====================================================
-     RENDU ADMIN
+     RENDU
   ===================================================== */
 
   return (
     <div className="admin-page">
-
-      {/* =================================================
-          BARRE LATÉRALE
-      ================================================= */}
-
       <aside className="admin-sidebar">
-
         <div className="admin-logo">
           BLOOM
           <span>TEAMS ADMIN</span>
         </div>
-
         <nav className="admin-menu">
-          <a 
-            href="#dashboard" 
+          <a
+            href="#dashboard"
             className={ongletActif === "dashboard" ? "menu-actif" : ""}
-            onClick={(e) => { e.preventDefault(); setOngletActif("dashboard"); }}
+            onClick={(e) => {
+              e.preventDefault();
+              setOngletActif("dashboard");
+            }}
           >
-            <span>▦</span>
             TABLEAU DE BORD
           </a>
-          <a 
-            href="#statistiques" 
-            className={ongletActif === "statistiques" ? "menu-actif" : ""}
-            onClick={(e) => { e.preventDefault(); setOngletActif("statistiques"); }}
+          <a
+            href="#personnes"
+            className={ongletActif === "personnes" ? "menu-actif" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              setOngletActif("personnes");
+            }}
           >
-            <span>📊</span>
+            PERSONNES
+          </a>
+          <a
+            href="#statistiques"
+            className={ongletActif === "statistiques" ? "menu-actif" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              setOngletActif("statistiques");
+            }}
+          >
             STATISTIQUES
           </a>
+          <a
+            href="#nettoyage"
+            className={ongletActif === "nettoyage" ? "menu-actif" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              setOngletActif("nettoyage");
+            }}
+          >
+            NETTOYAGE
+          </a>
         </nav>
-
         <div className="admin-sidebar-bas">
           <div className="admin-indicateur">
-            <span></span>
-            FIREBASE CONNECTÉ
+            <span></span> FIREBASE CONNECTÉ
           </div>
-          <button 
+          <button
             className="bouton-deconnexion"
             onClick={() => {
               setEstConnecte(false);
@@ -618,43 +765,43 @@ function Admin() {
               setMotDePasse("");
             }}
           >
-            ← Déconnexion
+            Déconnexion
           </button>
         </div>
-
       </aside>
 
-      {/* =================================================
-          CONTENU PRINCIPAL
-      ================================================= */}
-
       <div className="admin-contenu">
-
-        {/* =================================================
-            HEADER
-        ================================================= */}
-
+        {/* HEADER */}
         <div className="admin-header">
-
           <div>
             <p className="admin-sur-titre">BLOOM TEAMS</p>
-            <h1>{ongletActif === "dashboard" ? "TABLEAU DE BORD" : "STATISTIQUES"}</h1>
+            <h1>
+              {ongletActif === "dashboard"
+                ? "TABLEAU DE BORD"
+                : ongletActif === "personnes"
+                ? "PERSONNES"
+                : ongletActif === "nettoyage"
+                ? "NETTOYAGE"
+                : "STATISTIQUES"}
+            </h1>
             <p className="admin-description">
-              {ongletActif === "dashboard" 
-                ? "Suivi des présences et de l'activité des membres."
-                : "Analyse visuelle des données avec graphiques et export Excel."}
+              {ongletActif === "dashboard"
+                ? "Suivi des présences et de l'activité."
+                : ongletActif === "personnes"
+                ? "Liste complète des personnes enregistrées."
+                : ongletActif === "nettoyage"
+                ? "Fusion des fiches en double."
+                : "Analyse statistique et exports."}
             </p>
           </div>
-
           <div className="admin-actions">
             <button
               className="bouton-actualiser"
               onClick={recupererDonnees}
               disabled={chargement}
             >
-              ↻ {chargement ? "CHARGEMENT..." : "ACTUALISER"}
+              {chargement ? "CHARGEMENT" : "ACTUALISER"}
             </button>
-
             <div className="profil-admin">
               <div className="avatar-admin">P</div>
               <div>
@@ -663,207 +810,55 @@ function Admin() {
               </div>
             </div>
           </div>
-
         </div>
-
-        {/* =================================================
-            ERREUR
-        ================================================= */}
 
         {erreur && <div className="admin-erreur">{erreur}</div>}
 
-        {/* =================================================
-            ONGLET : TABLEAU DE BORD
-        ================================================= */}
-
+        {/* ============================================
+            ONGLET DASHBOARD
+        ============================================ */}
         {ongletActif === "dashboard" && (
-
           <>
-
-            {/* INTRODUCTION */}
-            <section className="admin-introduction" id="dashboard">
-
-              <div>
-                <p className="admin-sur-titre">CULTE DU SAMEDI</p>
-                <h2>SUIVI DES PRÉSENCES</h2>
-                <p>
-                  Toutes les informations renseignées dans le formulaire
-                  sont récupérées automatiquement depuis Firebase.
-                </p>
-              </div>
-
-              <div className="date-tableau">
-                <span>PERSONNES ENREGISTRÉES</span>
-                <strong>{totalPersonnes}</strong>
-              </div>
-
-            </section>
-
-            {/* CARTES STATISTIQUES */}
             <section className="cartes-statistiques">
-
               <div className="carte-statistique" style={{ borderTop: "4px solid #ff007f" }}>
-                <span className="icone-statistique">👤</span>
                 <div>
                   <p>TOTAL PERSONNES</p>
                   <strong>{totalPersonnes}</strong>
                 </div>
               </div>
-
               <div className="carte-statistique" style={{ borderTop: "4px solid #76ee59" }}>
-                <span className="icone-statistique">📋</span>
                 <div>
                   <p>TOTAL PRÉSENCES</p>
                   <strong>{totalPresences}</strong>
                 </div>
               </div>
-
               <div className="carte-statistique" style={{ borderTop: "4px solid #40d0e0" }}>
-                <span className="icone-statistique">✅</span>
                 <div>
                   <p>MEMBRES</p>
                   <strong>{totalMembres}</strong>
                 </div>
               </div>
-
               <div className="carte-statistique" style={{ borderTop: "4px solid #feca57" }}>
-                <span className="icone-statistique">❌</span>
                 <div>
                   <p>NON-MEMBRES</p>
                   <strong>{totalNonMembres}</strong>
                 </div>
               </div>
-
               <div className="carte-statistique" style={{ borderTop: "4px solid #ff6b6b" }}>
-                <span className="icone-statistique">🌟</span>
                 <div>
                   <p>NOUVEAUX</p>
                   <strong>{totalNouveaux}</strong>
                 </div>
               </div>
-
             </section>
 
-            {/* OUTILS DE RECHERCHE */}
-            <section className="outils-admin" id="presences">
-
-              <div className="recherche-admin">
-                <label>RECHERCHER</label>
-                <input
-                  type="text"
-                  placeholder="Nom, prénom, téléphone ou ID (BT-0001)..."
-                  value={recherche}
-                  onChange={(evenement) => setRecherche(evenement.target.value)}
-                />
-              </div>
-
-              <div className="filtre-admin">
-                <label>STATUT</label>
-                <select
-                  value={filtreStatut}
-                  onChange={(evenement) => setFiltreStatut(evenement.target.value)}
-                >
-                  <option value="TOUS">TOUS</option>
-                  <option value="Oui">MEMBRES</option>
-                  <option value="Non">NON-MEMBRES</option>
-                  <option value="Nouveau">NOUVEAUX</option>
-                </select>
-              </div>
-
-            </section>
-
-            {/* TABLEAU DES PRÉSENCES */}
-            <section className="section-tableau">
-
-              <div className="titre-tableau">
-                <div>
-                  <p>PRÉSENCES ENREGISTRÉES</p>
-                  <h3>LISTE DES PARTICIPANTS</h3>
-                </div>
-                <span>
-                  {presencesFiltrees.length} résultat
-                  {presencesFiltrees.length > 1 ? "s" : ""}
-                </span>
-              </div>
-
-              {chargement ? (
-                <div className="etat-tableau">
-                  <div className="chargement">CHARGEMENT DES DONNÉES...</div>
-                </div>
-              ) : presencesFiltrees.length === 0 ? (
-                <div className="etat-tableau">
-                  <div className="aucune-donnee">
-                    <strong>AUCUNE DONNÉE</strong>
-                    <p>Aucun enregistrement ne correspond à ta recherche.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="tableau-wrapper">
-                  <table className="tableau-presences">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>ID</th>
-                        <th>NOM</th>
-                        <th>PRÉNOM</th>
-                        <th>TÉLÉPHONE</th>
-                        <th>MEMBRE</th>
-                        <th>DÉPARTEMENT</th>
-                        <th>DATE</th>
-                        <th>HEURE</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {presencesFiltrees.map((personne, index) => (
-                        <tr key={personne.id}>
-                          <td>{index + 1}</td>
-                          <td>
-                            <span className="badge-id">{personne.personneId || "-"}</span>
-                          </td>
-                          <td>
-                            <strong>{personne.nom || "-"}</strong>
-                          </td>
-                          <td>{personne.prenom || "-"}</td>
-                          <td>{personne.telephone || "-"}</td>
-                          <td>
-                            <span
-                              className={
-                                personne.statut === "Oui"
-                                  ? "badge-membre"
-                                  : personne.statut === "Nouveau"
-                                  ? "badge-nouveau"
-                                  : "badge-non-membre"
-                              }
-                            >
-                              {personne.statut === "Oui"
-                                ? "MEMBRE"
-                                : personne.statut === "Nouveau"
-                                ? "NOUVEAU"
-                                : "NON-MEMBRE"}
-                            </span>
-                          </td>
-                          <td>{personne.departement || "-"}</td>
-                          <td>{personne.date || "-"}</td>
-                          <td>{personne.heure || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-            </section>
-
-            {/* SUIVI DE L'ACTIVITÉ */}
-            <section className="section-activite" id="activite">
-
+            <section className="section-activite">
               <div className="titre-activite">
                 <div>
                   <p>SUIVI MENSUEL</p>
                   <h2>SUIVI DE L'ACTIVITÉ</h2>
                   <span>{moisActuel}</span>
                 </div>
-
                 <div className="resume-activite">
                   <div style={{ borderBottom: "3px solid #111" }}>
                     <strong>{totalSuperActifs}</strong>
@@ -875,7 +870,7 @@ function Admin() {
                   </div>
                   <div style={{ borderBottom: "3px solid #999" }}>
                     <strong>{totalASuivre}</strong>
-                    <span>À SUIVRE</span>
+                    <span>A SUIVRE</span>
                   </div>
                   <div style={{ borderBottom: "3px solid #d5d5d5" }}>
                     <strong>{totalNonActifs}</strong>
@@ -884,83 +879,132 @@ function Admin() {
                 </div>
               </div>
 
-              {/* LÉGENDE */}
+              <div className="barre-filtres-suivi">
+                <div className="filtre-admin">
+                  <label>AFFICHER</label>
+                  <select
+                    value={modeSuivi}
+                    onChange={(e) => setModeSuivi(e.target.value)}
+                  >
+                    <option value="samedis">4 SAMEDIS DU MOIS</option>
+                    <option value="dimanches">4 DIMANCHES DU MOIS</option>
+                    <option value="tous">TOUS LES JOURS DU MOIS</option>
+                    <option value="aujourdhui">AUJOURD'HUI</option>
+                  </select>
+                </div>
+                <div className="filtre-admin">
+                  <label>RECHERCHE</label>
+                  <input
+                    type="text"
+                    placeholder="Nom, ID, téléphone..."
+                    value={recherche}
+                    onChange={(e) => setRecherche(e.target.value)}
+                  />
+                </div>
+                <div className="filtre-admin">
+                  <label>STATUT</label>
+                  <select
+                    value={filtreStatut}
+                    onChange={(e) => setFiltreStatut(e.target.value)}
+                  >
+                    <option value="TOUS">TOUS</option>
+                    <option value="Oui">MEMBRES</option>
+                    <option value="Non">NON-MEMBRES</option>
+                    <option value="Nouveau">NOUVEAUX</option>
+                  </select>
+                </div>
+                <div className="filtre-admin">
+                  <label>DÉPARTEMENT</label>
+                  <select
+                    value={filtreDepartement}
+                    onChange={(e) => setFiltreDepartement(e.target.value)}
+                  >
+                    <option value="TOUS">TOUS</option>
+                    {statsDepartements.map((d) => (
+                      <option key={d.nom} value={d.nom}>
+                        {d.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
               <div className="legende-activite">
                 <span>
-                  <b className="point-super-actif"></b>
-                  4/4 SUPER ACTIF
+                  <b className="point-super-actif"></b>4/4 SUPER ACTIF
                 </span>
                 <span>
-                  <b className="point-actif"></b>
-                  3/4 ACTIF
+                  <b className="point-actif"></b>3/4 ACTIF
                 </span>
                 <span>
-                  <b className="point-a-suivre"></b>
-                  2/4 À SUIVRE
+                  <b className="point-a-suivre"></b>2/4 A SUIVRE
                 </span>
                 <span>
-                  <b className="point-non-actif"></b>
-                  0–1/4 NON ACTIF
+                  <b className="point-non-actif"></b>0-1/4 NON ACTIF
                 </span>
               </div>
 
-              {/* TABLEAU ACTIVITÉ */}
-              {suiviActiviteFiltre.length === 0 ? (
+              {suiviFiltre.length === 0 ? (
                 <div className="etat-activite">
                   <strong>AUCUNE PERSONNE</strong>
-                  <p>
-                    Les personnes apparaîtront automatiquement dès qu'une
-                    présence sera enregistrée.
-                  </p>
                 </div>
               ) : (
-                <div className="tableau-activite-wrapper">
+                <div className="tableau-activite-wrapper scroll-interne">
                   <table className="tableau-activite">
                     <thead>
                       <tr>
                         <th>PERSONNE</th>
-                        {samedis.map((samedi, index) => (
-                          <th key={samedi.toISOString()}>
-                            SAMEDI {index + 1}
-                            <small>{formaterDate(samedi)}</small>
-                          </th>
-                        ))}
+                        {colonnesSuivi.map((col, i) => {
+                          const l = libelleColonne(col, i);
+                          return (
+                            <th key={col.toISOString()}>
+                              {l.titre}
+                              <small>{l.sous}</small>
+                            </th>
+                          );
+                        })}
                         <th>TOTAL</th>
                         <th>NIVEAU</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {suiviActiviteFiltre.map((personne) => (
-                        <tr key={personne.personneId}>
+                      {suiviFiltre.map((p) => (
+                        <tr key={p.personneId}>
                           <td>
                             <div className="personne-activite">
                               <div className="avatar-activite">
-                                {(personne.prenom?.charAt(0) || personne.nom?.charAt(0) || "?").toUpperCase()}
+                                {(p.prenom?.charAt(0) ||
+                                  p.nom?.charAt(0) ||
+                                  "?").toUpperCase()}
                               </div>
                               <div>
                                 <strong>
-                                  <span className="badge-id-mini">{personne.personneId}</span>
-                                  {personne.nom || "-"} {personne.prenom || ""}
+                                  <span className="badge-id-mini">
+                                    {p.personneId}
+                                  </span>
+                                  {p.nom} {p.prenom}
                                 </strong>
-                                <small>{personne.telephone}</small>
+                                <small>{p.telephone}</small>
                               </div>
                             </div>
                           </td>
-                          {personne.samedis.map((present, index) => (
-                            <td key={index} className="cellule-samedi">
+                          {p.colonnes.map((present, i) => (
+                            <td key={i} className="cellule-samedi">
                               {present ? (
-                                <span className="presence-oui">✓</span>
+                                <span className="presence-oui">OK</span>
                               ) : (
-                                <span className="presence-non">—</span>
+                                <span className="presence-non">-</span>
                               )}
                             </td>
                           ))}
                           <td>
-                            <strong className="total-activite">{personne.total}/4</strong>
+                            <strong className="total-activite">
+                              {p.total}/{colonnesSuivi.length}
+                            </strong>
                           </td>
                           <td>
-                            <span className={`badge-activite ${personne.niveau.classe}`}>
-                              {personne.niveau.nom}
+                            <span className={`badge-activite ${p.niveau.classe}`}>
+                              {p.niveau.nom}
                             </span>
                           </td>
                         </tr>
@@ -970,85 +1014,199 @@ function Admin() {
                 </div>
               )}
 
-            </section>
-
-            {/* EXPLICATION */}
-            <section className="bloc-explication">
-              <div>
-                <span>NOUVELLE LOGIQUE</span>
-                <h3>IDENTIFICATION PAR PERSONNE ID</h3>
-                <p>
-                  Chaque personne possède désormais un identifiant unique <strong>BT-XXXX</strong>.
-                  Le numéro de téléphone n'est plus utilisé comme identifiant principal.
-                  Une même personne peut avoir plusieurs présences sur les 4 samedis du mois.
-                  Le niveau d'activité est calculé automatiquement.
-                </p>
-              </div>
-
-              <div className="statuts-activite">
-                <div>
-                  <strong>4/4</strong>
-                  <span>SUPER ACTIF</span>
-                </div>
-                <div>
-                  <strong>3/4</strong>
-                  <span>ACTIF</span>
-                </div>
-                <div>
-                  <strong>2/4</strong>
-                  <span>À SUIVRE</span>
-                </div>
-                <div>
-                  <strong>0–1/4</strong>
-                  <span>NON ACTIF</span>
-                </div>
+              <div className="actions-export-mini">
+                <button
+                  className="bouton-export-mini"
+                  onClick={exporterSuiviComplet}
+                  disabled={exportEnCours || suiviFiltre.length === 0}
+                >
+                  EXPORTER LE SUIVI FILTRÉ
+                </button>
               </div>
             </section>
-
           </>
-
         )}
 
-        {/* =================================================
-            ONGLET : STATISTIQUES
-        ================================================= */}
-
-        {ongletActif === "statistiques" && (
-
+        {/* ============================================
+            ONGLET PERSONNES
+        ============================================ */}
+        {ongletActif === "personnes" && (
           <>
+            <section className="carte-total-personnes">
+              <div>
+                <p className="admin-sur-titre">TOTAL ENREGISTRÉ</p>
+                <h2>NOMBRE TOTAL DE PERSONNES</h2>
+              </div>
+              <div className="total-grand">
+                <strong>{totalPersonnes}</strong>
+                <span>personne(s)</span>
+              </div>
+            </section>
 
-            {/* SECTION STATISTIQUES AVEC GRAPHIQUES */}
+            <section className="barre-filtres-presences">
+              <div className="filtre-admin">
+                <label>RECHERCHE</label>
+                <input
+                  type="text"
+                  placeholder="Nom, ID, téléphone..."
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                />
+              </div>
+              <div className="filtre-admin">
+                <label>STATUT</label>
+                <select
+                  value={filtreStatut}
+                  onChange={(e) => setFiltreStatut(e.target.value)}
+                >
+                  <option value="TOUS">TOUS</option>
+                  <option value="Oui">MEMBRES</option>
+                  <option value="Non">NON-MEMBRES</option>
+                  <option value="Nouveau">NOUVEAUX</option>
+                </select>
+              </div>
+              <div className="filtre-admin">
+                <label>DÉPARTEMENT</label>
+                <select
+                  value={filtreDepartement}
+                  onChange={(e) => setFiltreDepartement(e.target.value)}
+                >
+                  <option value="TOUS">TOUS</option>
+                  {statsDepartements.map((d) => (
+                    <option key={d.nom} value={d.nom}>
+                      {d.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+
+            <section className="section-tableau">
+              <div className="titre-tableau">
+                <div>
+                  <p>FICHES ENREGISTRÉES</p>
+                  <h3>LISTE COMPLÈTE DES PERSONNES</h3>
+                </div>
+                <span>{personnesAffichees.length} résultat(s)</span>
+              </div>
+
+              {chargement ? (
+                <div className="etat-tableau">
+                  <div className="chargement">CHARGEMENT...</div>
+                </div>
+              ) : personnesAffichees.length === 0 ? (
+                <div className="etat-tableau">
+                  <div className="aucune-donnee">
+                    <strong>AUCUNE DONNÉE</strong>
+                  </div>
+                </div>
+              ) : (
+                <div className="tableau-wrapper scroll-interne">
+                  <table className="tableau-presences">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>NOM</th>
+                        <th>PRÉNOM</th>
+                        <th>TÉLÉPHONE</th>
+                        <th>STATUT</th>
+                        <th>DÉPARTEMENT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {personnesAffichees.map((p, i) => (
+                        <tr key={p.id}>
+                          <td>{i + 1}</td>
+                          <td>
+                            <span className="badge-id">{p.personneId}</span>
+                          </td>
+                          <td>
+                            <strong>{p.nom}</strong>
+                          </td>
+                          <td>{p.prenom}</td>
+                          <td>{p.telephone || "-"}</td>
+                          <td>
+                            <span
+                              className={
+                                p.statut === "Oui"
+                                  ? "badge-membre"
+                                  : p.statut === "Nouveau"
+                                  ? "badge-nouveau"
+                                  : "badge-non-membre"
+                              }
+                            >
+                              {p.statut === "Oui"
+                                ? "MEMBRE"
+                                : p.statut === "Nouveau"
+                                ? "NOUVEAU"
+                                : p.statut === "Non"
+                                ? "NON-MEMBRE"
+                                : "-"}
+                            </span>
+                          </td>
+                          <td>{p.departement || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="actions-export-mini">
+                <button
+                  className="bouton-export-mini"
+                  onClick={exporterListePersonnes}
+                  disabled={exportEnCours || personnesAffichees.length === 0}
+                >
+                  EXPORTER LA LISTE EN EXCEL
+                </button>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* ============================================
+            ONGLET STATISTIQUES
+        ============================================ */}
+        {ongletActif === "statistiques" && (
+          <>
+            <section className="barre-filtres-stat">
+              <div className="filtre-admin">
+                <label>TYPE DE CULTE</label>
+                <select
+                  value={filtreStat}
+                  onChange={(e) => setFiltreStat(e.target.value)}
+                >
+                  <option value="samedis">SAMEDIS UNIQUEMENT</option>
+                  <option value="dimanches">DIMANCHES UNIQUEMENT</option>
+                  <option value="tous">SAMEDIS + DIMANCHES</option>
+                </select>
+              </div>
+            </section>
+
             <section className="section-statistiques">
-
-              {/* GRAPHIQUE 1 : RÉPARTITION DES STATUTS (PIE CHART) */}
               <div className="grille-graphiques">
-
                 <div className="carte-graphique">
                   <h4>RÉPARTITION DES STATUTS</h4>
                   {statsStatuts.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <PieChart>
                         <Pie
                           data={statsStatuts}
                           cx="50%"
                           cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
+                          innerRadius={55}
+                          outerRadius={95}
                           paddingAngle={5}
                           dataKey="valeur"
                           label={({ nom, valeur }) => `${nom}: ${valeur}`}
                           labelLine={false}
                         >
-                          {statsStatuts.map((entry, index) => (
+                          {statsStatuts.map((_, i) => (
                             <Cell
-                              key={`cell-${index}`}
-                              fill={[
-                                "#ff007f",
-                                "#76ee59",
-                                "#40d0e0",
-                                "#0a3663",
-                                "#feca57",
-                              ][index % 5]}
+                              key={i}
+                              fill={["#ff007f", "#76ee59", "#40d0e0"][i % 3]}
                             />
                           ))}
                         </Pie>
@@ -1056,47 +1214,56 @@ function Admin() {
                       </PieChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="aucune-donnee">Aucune donnée disponible</div>
+                    <div className="aucune-donnee">Aucune donnée</div>
                   )}
                 </div>
 
-                {/* GRAPHIQUE 2 : ACTIVITÉ DES MEMBRES (BAR CHART) */}
                 <div className="carte-graphique">
                   <h4>NIVEAU D'ACTIVITÉ</h4>
                   {donneesActivite.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={donneesActivite}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="nom" tick={{ fontSize: 10 }} />
                         <YAxis />
                         <Tooltip />
-                        <Bar dataKey="valeur" fill="#0a3663" radius={[4, 4, 0, 0]}>
-                          {donneesActivite.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.couleur} />
+                        <Bar dataKey="valeur" radius={[4, 4, 0, 0]}>
+                          {donneesActivite.map((e, i) => (
+                            <Cell key={i} fill={e.couleur} />
                           ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="aucune-donnee">Aucune donnée disponible</div>
+                    <div className="aucune-donnee">Aucune donnée</div>
                   )}
                 </div>
-
               </div>
 
-              {/* DEUXIÈME LIGNE DE GRAPHIQUES */}
               <div className="grille-graphiques">
-
-                {/* GRAPHIQUE 3 : ÉVOLUTION DES PRÉSENCES (AREA CHART) */}
                 <div className="carte-graphique">
                   <h4>ÉVOLUTION DES PRÉSENCES</h4>
                   {donneesEvolution.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <AreaChart data={donneesEvolution}>
                         <defs>
-                          <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#ff007f" stopOpacity={0.8} />
-                            <stop offset="95%" stopColor="#ff007f" stopOpacity={0} />
+                          <linearGradient
+                            id="colorTotal"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#ff007f"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#ff007f"
+                              stopOpacity={0}
+                            />
                           </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -1113,15 +1280,14 @@ function Admin() {
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="aucune-donnee">Aucune donnée disponible</div>
+                    <div className="aucune-donnee">Aucune donnée</div>
                   )}
                 </div>
 
-                {/* GRAPHIQUE 4 : DÉPARTEMENTS (BAR CHART) */}
                 <div className="carte-graphique">
                   <h4>RÉPARTITION PAR DÉPARTEMENT</h4>
                   {statsDepartements.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={280}>
+                    <ResponsiveContainer width="100%" height={260}>
                       <BarChart
                         data={statsDepartements}
                         layout="vertical"
@@ -1129,82 +1295,245 @@ function Admin() {
                       >
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis type="number" />
-                        <YAxis dataKey="nom" type="category" tick={{ fontSize: 10 }} width={80} />
+                        <YAxis
+                          dataKey="nom"
+                          type="category"
+                          tick={{ fontSize: 10 }}
+                          width={100}
+                        />
                         <Tooltip />
-                        <Bar dataKey="valeur" fill="#40d0e0" radius={[0, 4, 4, 0]}>
-                          {statsDepartements.map((entry, index) => (
+                        <Bar dataKey="valeur" radius={[0, 4, 4, 0]}>
+                          {statsDepartements.map((_, i) => (
                             <Cell
-                              key={`cell-${index}`}
-                              fill={COULEURS[index % COULEURS.length]}
+                              key={i}
+                              fill={
+                                [
+                                  "#ff007f",
+                                  "#76ee59",
+                                  "#40d0e0",
+                                  "#0a3663",
+                                  "#feca57",
+                                  "#ff6b6b",
+                                  "#48dbfb",
+                                ][i % 7]
+                              }
                             />
                           ))}
                         </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div className="aucune-donnee">Aucune donnée disponible</div>
+                    <div className="aucune-donnee">Aucune donnée</div>
                   )}
                 </div>
-
               </div>
-
             </section>
 
-            {/* BOUTONS D'EXPORT EXCEL */}
+            <section className="bloc-champion">
+              <div className="titre-champion">
+                <p className="admin-sur-titre">CLASSEMENT GÉNÉRAL</p>
+                <h3>TOP 5 DES PLUS RÉGULIERS</h3>
+                <p>
+                  Classement basé sur :{" "}
+                  {filtreStat === "dimanches"
+                    ? "les dimanches"
+                    : filtreStat === "samedis"
+                    ? "les samedis"
+                    : "samedis + dimanches"}
+                  .
+                </p>
+              </div>
+
+              <div className="liste-champion">
+                {championGlobal.map((p, i) => (
+                  <div
+                    key={p.personneId}
+                    className={`carte-champion rang-${i + 1}`}
+                  >
+                    <div className="rang-champion">#{i + 1}</div>
+                    <div className="avatar-activite">
+                      {(p.prenom?.charAt(0) || p.nom?.charAt(0) || "?").toUpperCase()}
+                    </div>
+                    <div className="infos-champion">
+                      <strong>
+                        {p.nom} {p.prenom}
+                      </strong>
+                      <small>
+                        {p.departement || "Non défini"} — {p.personneId}
+                      </small>
+                    </div>
+                    <div className="score-champion">
+                      <strong>{p.total}</strong>
+                      <span>{p.niveau.nom}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className="bouton-export-mini"
+                onClick={exporterTopActifs}
+                disabled={exportEnCours || championGlobal.length === 0}
+              >
+                EXPORTER LE TOP 5
+              </button>
+            </section>
+
+            <section className="bloc-departements">
+              <div className="titre-champion">
+                <p className="admin-sur-titre">DÉTAIL PAR DÉPARTEMENT</p>
+                <h3>TOP 3 PAR DÉPARTEMENT</h3>
+                <p>
+                  Les trois personnes les plus régulières de chaque département.
+                </p>
+              </div>
+
+              <div className="grille-departements">
+                {classementDepartements.map((d) => (
+                  <div key={d.departement} className="carte-departement">
+                    <div className="entete-departement">
+                      <h4>{d.departement}</h4>
+                      <span>
+                        {d.nombre} personne(s) — {d.totalPresences} présence(s)
+                      </span>
+                    </div>
+                    <div className="liste-top3">
+                      {d.top3.map((p, i) => (
+                        <div key={p.personneId} className="ligne-top3">
+                          <span className="rang-top3">#{i + 1}</span>
+                          <div className="infos-top3">
+                            <strong>
+                              {p.nom} {p.prenom}
+                            </strong>
+                            <small>{p.personneId}</small>
+                          </div>
+                          <span className="score-top3">{p.total}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className="bouton-export-mini"
+                onClick={exporterParDepartement}
+                disabled={exportEnCours || classementDepartements.length === 0}
+              >
+                EXPORTER PAR DÉPARTEMENT
+              </button>
+            </section>
+
             <section className="section-export">
               <div className="titre-export">
-                <p className="admin-sur-titre">EXPORT</p>
-                <h3>📥 EXPORTER LES PRÉSENCES PAR SAMEDI</h3>
-                <p>Exporte la liste des personnes présentes pour chaque samedi du mois.</p>
+                <p className="admin-sur-titre">EXPORT EXCEL</p>
+                <h3>EXPORTS DISPONIBLES</h3>
+                <p>Sélectionnez le type d'export souhaité.</p>
               </div>
 
               <div className="boutons-export">
-                {samedis.map((samedi, index) => {
-                  const dateFormatee = samedi.toLocaleDateString("fr-FR", {
+                {samedis.map((s, i) => {
+                  const dateF = s.toLocaleDateString("fr-FR", {
                     day: "2-digit",
                     month: "short",
                   });
-                  const nbPresent = suiviActivite.filter((p) => p.samedis[index]).length;
-
+                  const nb = suiviActivite.filter((p) => p.samedis[i]).length;
                   return (
                     <button
-                      key={index}
+                      key={i}
                       className="bouton-export"
-                      onClick={() => exporterExcel(index)}
-                      disabled={exportEnCours || nbPresent === 0}
+                      onClick={() => exporterParSamedi(i)}
+                      disabled={exportEnCours || nb === 0}
                       style={{
-                        background: nbPresent > 0 ? "#0a3663" : "#ccc",
-                        cursor: nbPresent > 0 ? "pointer" : "not-allowed",
+                        background: nb > 0 ? "#0a3663" : "#ccc",
+                        cursor: nb > 0 ? "pointer" : "not-allowed",
                       }}
                     >
-                      <span className="icon-export">📊</span>
                       <div>
-                        <strong>Samedi {index + 1}</strong>
-                        <small>{dateFormatee} • {nbPresent} présent(s)</small>
+                        <strong>Samedi {i + 1}</strong>
+                        <small>
+                          {dateF} — {nb} présent(s)
+                        </small>
                       </div>
-                      <span className="arrow-export">→</span>
                     </button>
                   );
                 })}
+
+                <button
+                  className="bouton-export"
+                  onClick={exporterTousSamedis}
+                  disabled={exportEnCours}
+                  style={{ background: "#ff007f" }}
+                >
+                  <div>
+                    <strong>TOUS LES SAMEDIS</strong>
+                    <small>Un fichier, plusieurs feuilles</small>
+                  </div>
+                </button>
+
+                <button
+                  className="bouton-export"
+                  onClick={exporterSuiviComplet}
+                  disabled={exportEnCours || suiviFiltre.length === 0}
+                  style={{ background: "#76ee59", color: "#050505" }}
+                >
+                  <div>
+                    <strong>SUIVI COMPLET</strong>
+                    <small>{suiviFiltre.length} personne(s)</small>
+                  </div>
+                </button>
+
+                <button
+                  className="bouton-export"
+                  onClick={exporterListePersonnes}
+                  disabled={exportEnCours || personnesAffichees.length === 0}
+                  style={{ background: "#40d0e0", color: "#050505" }}
+                >
+                  <div>
+                    <strong>LISTE PERSONNES</strong>
+                    <small>{personnesAffichees.length} ligne(s)</small>
+                  </div>
+                </button>
+
+                <button
+                  className="bouton-export"
+                  onClick={exporterParDepartement}
+                  disabled={exportEnCours}
+                  style={{ background: "#feca57", color: "#050505" }}
+                >
+                  <div>
+                    <strong>PAR DÉPARTEMENT</strong>
+                    <small>Une feuille par département</small>
+                  </div>
+                </button>
+
+                <button
+                  className="bouton-export"
+                  onClick={exporterTopActifs}
+                  disabled={exportEnCours}
+                  style={{ background: "#050505" }}
+                >
+                  <div>
+                    <strong>TOP ACTIFS</strong>
+                    <small>Top 5 plus réguliers</small>
+                  </div>
+                </button>
               </div>
             </section>
-
           </>
-
         )}
 
-        {/* =================================================
-            FOOTER
-        ================================================= */}
+        {/* ============================================
+            ONGLET NETTOYAGE
+        ============================================ */}
+        {ongletActif === "nettoyage" && <Nettoyage />}
 
         <footer className="admin-footer">
           <span>BLOOM TEAMS</span>
           <span>ADMINISTRATION</span>
-          <span>© 2026</span>
+          <span>2026</span>
         </footer>
-
       </div>
-
     </div>
   );
 }
