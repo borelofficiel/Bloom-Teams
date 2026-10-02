@@ -68,6 +68,22 @@ function Admin() {
   const [filtreStat, setFiltreStat] = useState("samedis");
 
   /* =====================================================
+     FILTRES — PRÉSENCES PAR JOUR
+  ===================================================== */
+
+  const [dateSelectionnee, setDateSelectionnee] = useState(() => {
+    // Par défaut : aujourd'hui au format YYYY-MM-DD
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, "0");
+    const d = String(today.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  });
+  const [rechercheJour, setRechercheJour] = useState("");
+  const [filtreStatutJour, setFiltreStatutJour] = useState("TOUS");
+  const [filtreDepartementJour, setFiltreDepartementJour] = useState("TOUS");
+
+  /* =====================================================
      EXPORT
   ===================================================== */
 
@@ -418,11 +434,11 @@ function Admin() {
     return Object.entries(map)
       .map(([departement, personnes]) => {
         const tri = [...personnes].sort((a, b) => b.total - a.total);
-        const totalPresences = personnes.reduce((s, p) => s + p.total, 0);
+        const totalPresencesDept = personnes.reduce((s, p) => s + p.total, 0);
         return {
           departement,
           nombre: personnes.length,
-          totalPresences,
+          totalPresences: totalPresencesDept,
           top3: tri.slice(0, 3),
         };
       })
@@ -523,6 +539,168 @@ function Admin() {
     });
     return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
   }, [presencesValides]);
+
+  /* =====================================================
+     PRÉSENCES PAR JOUR — CALCULS
+  ===================================================== */
+
+  // Convertit "YYYY-MM-DD" en objet Date local (sans décalage UTC)
+  const dateDepuisInput = (str) => {
+    if (!str) return null;
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  };
+
+  // Liste des personnes présentes à la date sélectionnée
+  const personnesDuJour = useMemo(() => {
+    const cible = dateDepuisInput(dateSelectionnee);
+    if (!cible) return [];
+
+    // On récupère les présences de cette date
+    const presencesDuJour = presencesValides.filter((p) =>
+      dateMatch(p, cible)
+    );
+
+    // On associe chaque présence à sa fiche personne
+    const mapPersonnes = {};
+    personnesUniques.forEach((p) => {
+      mapPersonnes[p.personneId] = p;
+    });
+
+    const resultat = [];
+    const vus = new Set();
+
+    presencesDuJour.forEach((pres) => {
+      // Éviter les doublons si la personne a pointé plusieurs fois
+      const cle = pres.personneId + "_" + pres.id;
+      if (vus.has(cle)) return;
+      vus.add(cle);
+
+      const fiche = mapPersonnes[pres.personneId];
+      if (!fiche) return;
+
+      resultat.push({
+        id: pres.id,
+        personneId: pres.personneId,
+        nom: fiche.nom || "",
+        prenom: fiche.prenom || "",
+        telephone: fiche.telephone || "",
+        statut: fiche.statut || "",
+        departement: fiche.departement || "",
+        heure: pres.dateEnregistrement
+          ? (() => {
+              try {
+                const d =
+                  typeof pres.dateEnregistrement.toDate === "function"
+                    ? pres.dateEnregistrement.toDate()
+                    : new Date(pres.dateEnregistrement);
+                return d.toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                });
+              } catch {
+                return "-";
+              }
+            })()
+          : "-",
+      });
+    });
+
+    // Tri par ID
+    return resultat.sort((a, b) => {
+      const na = parseInt((a.personneId || "").replace(/\D/g, "")) || 0;
+      const nb = parseInt((b.personneId || "").replace(/\D/g, "")) || 0;
+      return na - nb;
+    });
+  }, [presencesValides, personnesUniques, dateSelectionnee]);
+
+  // Application des filtres sur la liste du jour
+  const personnesDuJourFiltrees = useMemo(() => {
+    return personnesDuJour.filter((p) => {
+      const t = rechercheJour.toLowerCase().trim();
+      const nom = `${p.nom} ${p.prenom}`.toLowerCase();
+      const tel = (p.telephone || "").toLowerCase();
+      const id = (p.personneId || "").toLowerCase();
+      const matchRech =
+        !t || nom.includes(t) || tel.includes(t) || id.includes(t);
+      const matchStatut =
+        filtreStatutJour === "TOUS" || p.statut === filtreStatutJour;
+      const matchDept =
+        filtreDepartementJour === "TOUS" ||
+        p.departement === filtreDepartementJour;
+      return matchRech && matchStatut && matchDept;
+    });
+  }, [personnesDuJour, rechercheJour, filtreStatutJour, filtreDepartementJour]);
+
+  // Compteurs du jour sélectionné
+  const statsJour = useMemo(() => {
+    const total = personnesDuJour.length;
+    const membres = personnesDuJour.filter((p) => p.statut === "Oui").length;
+    const nonMembres = personnesDuJour.filter((p) => p.statut === "Non").length;
+    const nouveaux = personnesDuJour.filter((p) => p.statut === "Nouveau").length;
+    return { total, membres, nonMembres, nouveaux };
+  }, [personnesDuJour]);
+
+  // Départements disponibles pour le jour sélectionné (pour le filtre)
+  const departementsDuJour = useMemo(() => {
+    const set = new Set();
+    personnesDuJour.forEach((p) => {
+      if (p.departement) set.add(p.departement);
+    });
+    return Array.from(set).sort();
+  }, [personnesDuJour]);
+
+  // Libellé long de la date sélectionnée
+  const libelleDateSelectionnee = useMemo(() => {
+    const d = dateDepuisInput(dateSelectionnee);
+    if (!d) return "";
+    return d.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    });
+  }, [dateSelectionnee]);
+
+  // Raccourcis de dates rapides
+  const setAujourdHui = () => {
+    const t = new Date();
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, "0");
+    const d = String(t.getDate()).padStart(2, "0");
+    setDateSelectionnee(`${y}-${m}-${d}`);
+  };
+
+  const setHier = () => {
+    const t = new Date();
+    t.setDate(t.getDate() - 1);
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, "0");
+    const d = String(t.getDate()).padStart(2, "0");
+    setDateSelectionnee(`${y}-${m}-${d}`);
+  };
+
+  const setDernierSamedi = () => {
+    const t = new Date();
+    const day = t.getDay();
+    const diff = (day + 1) % 7; // recule jusqu'à samedi
+    t.setDate(t.getDate() - diff);
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, "0");
+    const d = String(t.getDate()).padStart(2, "0");
+    setDateSelectionnee(`${y}-${m}-${d}`);
+  };
+
+  const setDernierDimanche = () => {
+    const t = new Date();
+    const day = t.getDay();
+    const diff = day === 0 ? 0 : day; // recule jusqu'à dimanche
+    t.setDate(t.getDate() - diff);
+    const y = t.getFullYear();
+    const m = String(t.getMonth() + 1).padStart(2, "0");
+    const d = String(t.getDate()).padStart(2, "0");
+    setDateSelectionnee(`${y}-${m}-${d}`);
+  };
 
   /* =====================================================
      EXPORTS
@@ -707,6 +885,35 @@ function Admin() {
     }
   };
 
+  // Export de la liste du jour sélectionné
+  const exporterJourSelectionne = () => {
+    setExportEnCours(true);
+    try {
+      const donnees = personnesDuJourFiltrees.map((p, i) => ({
+        "#": i + 1,
+        ID: p.personneId,
+        Nom: p.nom,
+        Prenom: p.prenom,
+        Telephone: p.telephone || "",
+        Heure: p.heure,
+        Statut:
+          p.statut === "Oui"
+            ? "MEMBRE"
+            : p.statut === "Nouveau"
+            ? "NOUVEAU"
+            : p.statut === "Non"
+            ? "NON-MEMBRE"
+            : "-",
+        Departement: p.departement || "-",
+        Date: libelleDateSelectionnee,
+      }));
+      const safeDate = dateSelectionnee.replace(/-/g, "_");
+      exporterListe(donnees, `BLOOM_PRESENCES_${safeDate}.xlsx`, "Presences");
+    } finally {
+      setExportEnCours(false);
+    }
+  };
+
   /* =====================================================
      MOIS
   ===================================================== */
@@ -788,6 +995,16 @@ function Admin() {
             TABLEAU DE BORD
           </a>
           <a
+            href="#presences-jour"
+            className={ongletActif === "presences-jour" ? "menu-actif" : ""}
+            onClick={(e) => {
+              e.preventDefault();
+              setOngletActif("presences-jour");
+            }}
+          >
+            PRÉSENCES PAR JOUR
+          </a>
+          <a
             href="#personnes"
             className={ongletActif === "personnes" ? "menu-actif" : ""}
             onClick={(e) => {
@@ -843,6 +1060,8 @@ function Admin() {
             <h1>
               {ongletActif === "dashboard"
                 ? "TABLEAU DE BORD"
+                : ongletActif === "presences-jour"
+                ? "PRÉSENCES PAR JOUR"
                 : ongletActif === "personnes"
                 ? "PERSONNES"
                 : ongletActif === "nettoyage"
@@ -852,6 +1071,8 @@ function Admin() {
             <p className="admin-description">
               {ongletActif === "dashboard"
                 ? "Suivi des présences et de l'activité."
+                : ongletActif === "presences-jour"
+                ? "Détail des présences jour par jour, avec liste nominative."
                 : ongletActif === "personnes"
                 ? "Liste complète des personnes enregistrées."
                 : ongletActif === "nettoyage"
@@ -1086,6 +1307,232 @@ function Admin() {
                   disabled={exportEnCours || suiviFiltre.length === 0}
                 >
                   EXPORTER LE SUIVI FILTRÉ
+                </button>
+              </div>
+            </section>
+          </>
+        )}
+
+        {/* ============================================
+            ONGLET PRÉSENCES PAR JOUR
+        ============================================ */}
+        {ongletActif === "presences-jour" && (
+          <>
+            {/* Sélection de la date */}
+            <section className="section-presences-jour">
+              <div className="titre-presences-jour">
+                <div>
+                  <p className="admin-sur-titre">VUE QUOTIDIENNE</p>
+                  <h3>PRÉSENCES DU JOUR</h3>
+                  <p className="sous-titre-date">{libelleDateSelectionnee}</p>
+                </div>
+              </div>
+
+              <div className="barre-selection-date">
+                <div className="filtre-admin">
+                  <label>CHOISIR UNE DATE</label>
+                  <input
+                    type="date"
+                    value={dateSelectionnee}
+                    onChange={(e) => setDateSelectionnee(e.target.value)}
+                  />
+                </div>
+
+                <div className="raccourcis-date">
+                  <button
+                    className="bouton-raccourci"
+                    onClick={setAujourdHui}
+                  >
+                    AUJOURD'HUI
+                  </button>
+                  <button className="bouton-raccourci" onClick={setHier}>
+                    HIER
+                  </button>
+                  <button
+                    className="bouton-raccourci"
+                    onClick={setDernierSamedi}
+                  >
+                    DERNIER SAMEDI
+                  </button>
+                  <button
+                    className="bouton-raccourci"
+                    onClick={setDernierDimanche}
+                  >
+                    DERNIER DIMANCHE
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Compteurs du jour */}
+            <section className="cartes-statistiques-jour">
+              <div
+                className="carte-statistique-jour"
+                style={{ borderTop: "4px solid #ff007f" }}
+              >
+                <div>
+                  <p>TOTAL PRÉSENCES</p>
+                  <strong>{statsJour.total}</strong>
+                </div>
+              </div>
+              <div
+                className="carte-statistique-jour"
+                style={{ borderTop: "4px solid #40d0e0" }}
+              >
+                <div>
+                  <p>MEMBRES</p>
+                  <strong>{statsJour.membres}</strong>
+                </div>
+              </div>
+              <div
+                className="carte-statistique-jour"
+                style={{ borderTop: "4px solid #feca57" }}
+              >
+                <div>
+                  <p>NON-MEMBRES</p>
+                  <strong>{statsJour.nonMembres}</strong>
+                </div>
+              </div>
+              <div
+                className="carte-statistique-jour"
+                style={{ borderTop: "4px solid #ff6b6b" }}
+              >
+                <div>
+                  <p>NOUVEAUX</p>
+                  <strong>{statsJour.nouveaux}</strong>
+                </div>
+              </div>
+            </section>
+
+            {/* Filtres */}
+            <section className="barre-filtres-presences-jour">
+              <div className="filtre-admin">
+                <label>RECHERCHE</label>
+                <input
+                  type="text"
+                  placeholder="Nom, ID, téléphone..."
+                  value={rechercheJour}
+                  onChange={(e) => setRechercheJour(e.target.value)}
+                />
+              </div>
+              <div className="filtre-admin">
+                <label>STATUT</label>
+                <select
+                  value={filtreStatutJour}
+                  onChange={(e) => setFiltreStatutJour(e.target.value)}
+                >
+                  <option value="TOUS">TOUS</option>
+                  <option value="Oui">MEMBRES</option>
+                  <option value="Non">NON-MEMBRES</option>
+                  <option value="Nouveau">NOUVEAUX</option>
+                </select>
+              </div>
+              <div className="filtre-admin">
+                <label>DÉPARTEMENT</label>
+                <select
+                  value={filtreDepartementJour}
+                  onChange={(e) => setFiltreDepartementJour(e.target.value)}
+                >
+                  <option value="TOUS">TOUS</option>
+                  {departementsDuJour.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+
+            {/* Liste nominative */}
+            <section className="section-tableau">
+              <div className="titre-tableau">
+                <div>
+                  <p>LISTE NOMINATIVE</p>
+                  <h3>
+                    PERSONNES PRÉSENTES LE {libelleDateSelectionnee.toUpperCase()}
+                  </h3>
+                </div>
+                <span>{personnesDuJourFiltrees.length} résultat(s)</span>
+              </div>
+
+              {chargement ? (
+                <div className="etat-tableau">
+                  <div className="chargement">CHARGEMENT...</div>
+                </div>
+              ) : personnesDuJourFiltrees.length === 0 ? (
+                <div className="etat-tableau">
+                  <div className="aucune-donnee">
+                    <strong>
+                      AUCUNE PRÉSENCE ENREGISTRÉE POUR CETTE DATE
+                    </strong>
+                  </div>
+                </div>
+              ) : (
+                <div className="tableau-wrapper scroll-interne">
+                  <table className="tableau-presences">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>ID</th>
+                        <th>NOM</th>
+                        <th>PRÉNOM</th>
+                        <th>TÉLÉPHONE</th>
+                        <th>HEURE</th>
+                        <th>STATUT</th>
+                        <th>DÉPARTEMENT</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {personnesDuJourFiltrees.map((p, i) => (
+                        <tr key={p.id}>
+                          <td>{i + 1}</td>
+                          <td>
+                            <span className="badge-id">{p.personneId}</span>
+                          </td>
+                          <td>
+                            <strong>{p.nom}</strong>
+                          </td>
+                          <td>{p.prenom}</td>
+                          <td>{p.telephone || "-"}</td>
+                          <td>
+                            <span className="badge-heure">{p.heure}</span>
+                          </td>
+                          <td>
+                            <span
+                              className={
+                                p.statut === "Oui"
+                                  ? "badge-membre"
+                                  : p.statut === "Nouveau"
+                                  ? "badge-nouveau"
+                                  : "badge-non-membre"
+                              }
+                            >
+                              {p.statut === "Oui"
+                                ? "MEMBRE"
+                                : p.statut === "Nouveau"
+                                ? "NOUVEAU"
+                                : p.statut === "Non"
+                                ? "NON-MEMBRE"
+                                : "-"}
+                            </span>
+                          </td>
+                          <td>{p.departement || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="actions-export-mini">
+                <button
+                  className="bouton-export-mini"
+                  onClick={exporterJourSelectionne}
+                  disabled={
+                    exportEnCours || personnesDuJourFiltrees.length === 0
+                  }
+                >
+                  EXPORTER LA LISTE DU JOUR EN EXCEL
                 </button>
               </div>
             </section>
@@ -1734,5 +2181,3 @@ function Admin() {
 }
 
 export default Admin;
-
-

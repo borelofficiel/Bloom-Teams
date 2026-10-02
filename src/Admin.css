@@ -3990,3 +3990,238 @@ select {
     width: 100%;
   }
 }
+
+/* =========================================================
+   ⭐ NOUVELLE SECTION — PRÉSENCES PAR JOUR
+========================================================= */
+
+/* ---------- Bloc sélection date ---------- */
+
+.section-presences-jour {
+  background: white;
+  border: 2px solid #050505;
+  box-shadow: 6px 6px 0 #050505;
+  margin-bottom: 25px;
+  padding: 25px;
+}
+
+.titre-presences-jour {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #050505;
+}
+
+.titre-presences-jour h3 {
+  margin: 8px 0 6px;
+  font-size: 22px;
+  font-weight: 1000;
+  letter-spacing: -1px;
+  color: #050505;
+}
+
+.sous-titre-date {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+/* ---------- Barre sélection date ---------- */
+
+.barre-selection-date {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: end;
+}
+
+@media (min-width: 900px) {
+  .barre-selection-date {
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+.barre-selection-date .filtre-admin {
+  width: 100%;
+}
+
+.barre-selection-date input[type="date"] {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 2px solid #050505;
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #050505;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.barre-selection-date input[type="date"]:focus {
+  border-color: #ff007f;
+  box-shadow: 3px 3px 0 #76ee59;
+}
+
+/* ---------- Raccourcis de date ---------- */
+
+.raccourcis-date {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bouton-raccourci {
+  padding: 12px 16px;
+  background: #fff;
+  color: #050505;
+  border: 2px solid #050505;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 1px;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+
+.bouton-raccourci:hover {
+  background: #050505;
+  color: #76ee59;
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 #76ee59;
+}
+
+/* ---------- Cartes stats du jour ---------- */
+
+.cartes-statistiques-jour {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.carte-statistique-jour {
+  background: white;
+  border: 2px solid #050505;
+  padding: 20px;
+  transition: 0.2s ease;
+  box-shadow: 4px 4px 0 #050505;
+}
+
+.carte-statistique-jour:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 #050505;
+}
+
+.carte-statistique-jour p {
+  margin: 0;
+  color: #666;
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 1.5px;
+}
+
+.carte-statistique-jour strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 34px;
+  font-weight: 1000;
+  color: #050505;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+/* ---------- Barre filtres présences jour ---------- */
+
+.barre-filtres-presences-jour {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 25px;
+  padding: 18px;
+  background: #f7f7f7;
+  border: 2px solid #050505;
+  box-shadow: 4px 4px 0 #050505;
+}
+
+@media (min-width: 700px) {
+  .barre-filtres-presences-jour {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+/* ---------- Badge heure ---------- */
+
+.badge-heure {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #76ee59;
+  color: #050505;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 0.5px;
+  font-family: "Courier New", monospace;
+}
+
+/* ---------- Responsive mobile ---------- */
+
+@media (max-width: 900px) {
+  .cartes-statistiques-jour {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 649px) {
+  .section-presences-jour {
+    padding: 18px;
+    box-shadow: 4px 4px 0 #050505;
+  }
+
+  .titre-presences-jour h3 {
+    font-size: 17px;
+  }
+
+  .sous-titre-date {
+    font-size: 11px;
+  }
+
+  .cartes-statistiques-jour {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .carte-statistique-jour {
+    padding: 14px;
+    box-shadow: 3px 3px 0 #050505;
+  }
+
+  .carte-statistique-jour p {
+    font-size: 8px;
+  }
+
+  .carte-statistique-jour strong {
+    font-size: 26px;
+  }
+
+  .bouton-raccourci {
+    flex: 1 1 calc(50% - 4px);
+    padding: 10px 8px;
+    font-size: 9px;
+    text-align: center;
+  }
+
+  .barre-filtres-presences-jour {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 400px) {
+  .bouton-raccourci {
+    flex: 1 1 100%;
+  }
+}
